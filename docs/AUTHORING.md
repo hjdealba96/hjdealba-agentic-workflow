@@ -281,6 +281,59 @@ Behavior evals — does the skill produce correct output — are a separate,
 heavier flow needing git fixtures per scenario and grader subagents. Not built
 yet.
 
+### Future: `claude plugin eval`
+
+Claude Code ships a first-party eval runner that looks like a better fit for
+behavior evals than the skill-creator flow. As of v2.1.220 it is **early access
+and undocumented** — invoking it prints "`plugin eval` is currently in early
+access", and no page for it exists in the docs index.
+
+Recorded here so the path isn't rediscovered later. **Treat everything below the
+CLI flags as inferred** — those field names were read out of the CLI binary, not
+a published spec, so their types, defaults, and required-ness are unverified and
+may change before release.
+
+Layout: `evals/**/case.yaml`, or `evals/**/prompt.md` plus `graders/*.md`.
+`claude plugin eval init` runs an authoring interview; `--bare <name>` writes a
+blank template.
+
+Flags (verified from `--help`):
+
+| Flag | Purpose |
+| --- | --- |
+| `--ablation with-without` | Runs a no-plugin baseline arm, reports the score delta |
+| `--scaffold` | Runs each case's `scaffold_script` — author-supplied bash, off by default |
+| `--runs <n>` | Per-case runs, default 3 |
+| `--judge-model` | LLM-grader model, default haiku |
+| `--threshold <0..1>` | Exit non-zero if any case scores below it |
+| `--max-cost-usd` | Hard cost ceiling |
+| `--report <path>` | Self-contained HTML report |
+| `--tag` / `--case` | Filter which cases run |
+
+Case fields (inferred): `schema_version`, `scaffold_script`, `execution.prompt`,
+`context.history_file`, `max_turns`, `timeout_seconds`, `agent_timeout_seconds`,
+`max_duration_minutes`, `fleet_size`, `precondition_errors`.
+
+Grader types (inferred): `file_exists`, `regex`, `expected`, `tool_used`,
+`tool_order`, `baseline`, `diff_files`, `diff_lines`, `max_diff_files`,
+`max_diff_lines`.
+
+It closes the two gaps that stopped behavior evals here:
+
+- **`scaffold_script` builds the git fixture per case.** The blocker was that
+  each case described a repository state — stale target branch, secrets in the
+  diff, a subset deliberately staged — that had to exist before the run.
+- **`tool_used` and `tool_order` are programmatic, not model judgments.** They
+  would catch the stale-branch defect directly: assert `git fetch origin <target>`
+  runs *before* `git log origin/<target>..HEAD`. No LLM grader gives that
+  deterministically.
+- **`--ablation with-without`** supplies the baseline arm, and `--max-cost-usd`
+  bounds a run — both weak points of the skill-creator flow.
+
+**Don't author against it until it leaves early access.** It can't be run to
+validate even one case, so any suite written now is guesswork against a schema
+that may change.
+
 ## Versioning
 
 `version` in `plugin.json` is the update contract. If it is set, users only
