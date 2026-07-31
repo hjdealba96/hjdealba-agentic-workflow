@@ -1,0 +1,11 @@
+[
+  {"query": "commit my changes", "should_trigger": true},
+  {"query": "write a commit message for this", "should_trigger": true},
+  {"query": "save my progress", "should_trigger": true},
+  {"query": "git commit these fixes", "should_trigger": true},
+  {"query": "draft a commit message", "should_trigger": true},
+  {"query": "create a branch for the login work", "should_trigger": false},
+  {"query": "open a PR for this branch", "should_trigger": false},
+  {"query": "what does this function do?", "should_trigger": false},
+  {"query": "run the unit tests", "should_trigger": false}
+]

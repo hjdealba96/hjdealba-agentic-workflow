@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "henryd-workflow",
+  "description": "Henry De Alba's personal Claude Code skills. Opinionated defaults, meant to be forked and adapted.",
+  "owner": {
+    "name": "Henry De Alba",
+    "url": "https://github.com/hjdealba96"
+  },
+  "plugins": [
+    {
+      "name": "git-workflow",
+      "source": "./git-workflow",
+      "description": "Language-agnostic git workflow: Conventional Commits messages, Conventional Branch naming, and stakeholder-readable pull requests.",
+      "category": "workflow",
+      "tags": ["git", "commits", "branches", "pull-requests", "conventional-commits"]
+    }
+  ]
+}

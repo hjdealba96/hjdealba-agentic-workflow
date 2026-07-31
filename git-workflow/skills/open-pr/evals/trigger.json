@@ -1,0 +1,11 @@
+[
+  {"query": "open a PR for this branch", "should_trigger": true},
+  {"query": "create a pull request", "should_trigger": true},
+  {"query": "PR this", "should_trigger": true},
+  {"query": "send this to main as a pull request", "should_trigger": true},
+  {"query": "commit my changes", "should_trigger": false},
+  {"query": "create a branch for the login work", "should_trigger": false},
+  {"query": "submit this for review", "should_trigger": false},
+  {"query": "review this code for bugs", "should_trigger": false},
+  {"query": "what does this function do?", "should_trigger": false}
+]

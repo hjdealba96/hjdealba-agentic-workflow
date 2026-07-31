@@ -1,0 +1,10 @@
+[
+  {"query": "create a branch for the dark mode toggle", "should_trigger": true},
+  {"query": "let's start working on the search feature", "should_trigger": true},
+  {"query": "switch to a new branch for this bugfix", "should_trigger": true},
+  {"query": "implement the retry logic for token refresh", "should_trigger": true},
+  {"query": "commit my changes", "should_trigger": false},
+  {"query": "what branch am I on?", "should_trigger": false},
+  {"query": "open a PR for this branch", "should_trigger": false},
+  {"query": "delete the merged branches", "should_trigger": false}
+]
