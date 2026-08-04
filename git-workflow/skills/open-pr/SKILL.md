@@ -104,6 +104,10 @@ git branch --show-current
 If uncommitted changes exist, tell the user and ask whether to commit first. Do not
 proceed with a PR that silently omits their work unless they say to ignore it.
 
+A leftover `claude-git-workflow/` from an earlier run is a working file, not work to
+commit — if it appears here, the repository is missing the `.gitignore` entry proposed in
+Step 5. Say so and move on; don't offer to commit it.
+
 **Remote tracking**
 
 ```bash
@@ -245,14 +249,37 @@ reviewers to a draft.
 
 ### Step 5: Generate Content for Review
 
-Write the proposed PR to a scratch file **outside the repository**, so it never dirties
-`git status` and needs no `.gitignore` entry:
+Write the proposed PR to a scratch file in `claude-git-workflow/` at the **repository
+root**, where it sits beside the code and is easy to open and edit:
 
 ```bash
-mkdir -p "${TMPDIR:-/tmp}/claude-git-workflow"
+mkdir -p "$(git rev-parse --show-toplevel)/claude-git-workflow"
 ```
 
-Write to `${TMPDIR:-/tmp}/claude-git-workflow/pr-content.md`.
+Write to `claude-git-workflow/pr-content.md`. Resolve the path from
+`git rev-parse --show-toplevel` rather than the current directory — the skill may be
+invoked from a subdirectory, and the file belongs at the root either way.
+
+#### Keep the directory out of version control
+
+`claude-git-workflow/` holds working files, never repository content. Check whether it is
+already ignored:
+
+```bash
+git check-ignore -q claude-git-workflow && echo ignored
+```
+
+If it is not ignored, propose the entry once — typically the first time a `git-workflow`
+skill runs in a repository:
+
+> `claude-git-workflow/` isn't in `.gitignore`. Add it so these working files never get
+> committed? (yes / no)
+
+**Add it only on approval**, appending `claude-git-workflow/` to the root `.gitignore` and
+creating that file if it doesn't exist. Don't re-ask on later runs once the entry exists.
+
+If the user declines, say plainly that the file will show as an untracked change until they
+remove it, and let them decide whether to proceed.
 
 Show the user the path, display the content inline, and explain they can edit the file
 directly before approving. **Do not create the PR in this step.**
@@ -367,7 +394,7 @@ Wait for an explicit answer. If changes are requested, revise and re-confirm.
 gh pr create \
   --title "..." \
   --base "<target>" \
-  --body-file "${TMPDIR:-/tmp}/claude-git-workflow/pr-content.md" \
+  --body-file "$(git rev-parse --show-toplevel)/claude-git-workflow/pr-content.md" \
   --assignee @me \
   [--draft] [--label "..."] [--reviewer "..."]
 ```
@@ -387,7 +414,7 @@ as written.
 generating the scratch file, suggesting titles and labels, verifying branch sync.
 
 **Requires explicit approval:** creating the PR, pushing a branch, applying labels, adding
-reviewers, writing a learnings entry.
+reviewers, writing a learnings entry, adding the `.gitignore` entry.
 
 **Never:** open a PR without confirmation, auto-apply labels, add reviewers to a draft,
 modify or merge code, include sensitive values, proceed on a diverged branch.

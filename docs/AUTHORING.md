@@ -93,8 +93,8 @@ The body is the prompt. What has worked well in the existing skills:
 
   This constrains *bundled* files only. A skill may still read and write paths in
   the repository it's running in — that's exactly what the learnings file and the
-  scratch files under `${TMPDIR}` are, and both are resolved at runtime rather
-  than shipped.
+  scratch files under `claude-git-workflow/` are, and both are resolved at runtime
+  rather than shipped.
 
 Supporting files (`reference.md`, `scripts/`) can live alongside `SKILL.md` in
 the skill directory and are loaded only when the skill is used — long reference
@@ -188,11 +188,56 @@ contradictions and the skill's behavior becomes unpredictable.
 ### Scratch files
 
 Skills that produce something for review before acting — a commit message, a PR
-body — write it under `${TMPDIR:-/tmp}/claude-git-workflow/`, never into the
-repository. The user can hand-edit the file, and the skill consumes it with
-`git commit -F` or `gh pr create --body-file` so their exact bytes are used.
-Keeping it out of the working tree means `git status` stays clean and no
-`.gitignore` entry is needed in any consuming project.
+body — write it to `claude-git-workflow/` at the **root of the repository the
+skill is running in**, resolved via `git rev-parse --show-toplevel` so invoking
+from a subdirectory still lands at the root. The user can hand-edit the file, and
+the skill consumes it with `git commit -F` or `gh pr create --body-file` so their
+exact bytes are used.
+
+The root location is deliberate: a path inside the repository the user is already
+working in is far easier to find and open than one under the system temp
+directory, which on Windows resolves somewhere under `AppData\Local\Temp` and
+reads as tool-owned rather than theirs.
+
+**Why a directory and not loose files at the root.** Two files named
+`commit-message.md` and `pr-content.md` sitting at the root would be marginally
+quicker to open, and it was considered. The directory wins on four counts:
+
+1. **`.gitignore` glob semantics.** A bare `commit-message.md` entry matches that
+   filename in *every* directory of the repo, so a consuming project with a
+   legitimate `docs/commit-message.md` would have it silently ignored. Flat files
+   would need anchored entries (`/commit-message.md`) and every skill would have
+   to get that right in every repo. A directory entry has no such ambiguity.
+2. **One entry, permanently.** `claude-git-workflow/` already covers every skill
+   added later. Flat files need a line per file, so a fourth skill writing a
+   scratch file means a fresh `.gitignore` edit — and a fresh approval prompt —
+   in every repo that already installed the plugin.
+3. **Collision risk.** These skills run in arbitrary repositories, and those
+   filenames are generic enough that a project may already have one. The skill
+   would overwrite it without warning. Namespacing removes the failure mode.
+4. **Provenance.** `claude-git-workflow/` is self-evidently tool-owned. Two loose
+   markdown files at the root read as project content, and someone seeing them in
+   a file tree or a diff can't tell what wrote them.
+
+The cost is one extra click, which doesn't touch the actual goal — the file being
+in the repository the user is working in rather than under a temp path.
+
+**The cost is a `.gitignore` entry, and skills must handle it.** A scratch file in
+the working tree will otherwise be committed. Each skill that writes one checks
+`git check-ignore -q claude-git-workflow`, and if the directory isn't ignored,
+proposes adding `claude-git-workflow/` to the root `.gitignore` — **appending only
+on approval**, like a learnings entry. One directory for the whole plugin means
+one entry covers every skill, present and future.
+
+The suggestion is a suggestion, not a gate. If the user declines, the skill says
+plainly what follows — `commit` will stage the message file with `git add -A`, and
+`open-pr` will leave an untracked file behind — and proceeds. No pathspec
+exclusion papers over it; the user gets the information and makes the call.
+
+An earlier version of this marketplace wrote scratch files under
+`${TMPDIR:-/tmp}/claude-git-workflow/` specifically to avoid the `.gitignore`
+entry. Navigability won: a file the user can't find can't be hand-edited, which
+defeats the point of the review step.
 
 ## Evals
 

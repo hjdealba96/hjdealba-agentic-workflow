@@ -30,11 +30,11 @@ example `/git-workflow:open-pr`.
 
 ## Plugins
 
-### `git-workflow` — `0.3.0`
+### `git-workflow` — `0.4.0`
 
 | Skill | Invocation | What it does |
 | --- | --- | --- |
-| `commit` | `/git-workflow:commit`, or automatic | Reads the diff, writes a message to the [Conventional Commits 1.0.0](https://www.conventionalcommits.org) spec, and commits with your exact bytes after you approve. Infers scope from a ticket ID or the code area, and matches the type vocabulary already in the repo's history. |
+| `commit` | `/git-workflow:commit`, or automatic | Reads the diff, writes a message to the [Conventional Commits 1.0.0](https://www.conventionalcommits.org) spec, and commits with your exact bytes after you approve. Infers scope from a ticket ID or the code area, matches the type vocabulary already in the repo's history, and credits the model that wrote the message in a `Co-Authored-By` trailer. |
 | `branch` | `/git-workflow:branch`, or automatic | Names branches to the [Conventional Branch](https://conventional-branch.github.io/) standard, checking existing branches so the name matches local convention. Asks for a ticket ID when the repo tracks work that way, and proposes a branch before implementation work starts on a trunk branch. |
 | `open-pr` | `/git-workflow:open-pr` only | Opens a GitHub PR through a gated sequential workflow. Discovers the target branch, PR template, and real label vocabulary from the repo; writes the body to a scratch file you can edit; scans for secrets; creates nothing without explicit approval. |
 
@@ -76,6 +76,19 @@ Skills also discover what they can rather than assuming: the PR template from
 `.github/`, real labels via `gh label list`, the default branch via
 `gh repo view`. Learnings only cover what discovery can't reach.
 
+### Working files
+
+Skills that ask you to approve something before acting — a commit message, a PR
+body — write it to `claude-git-workflow/` at the root of your repository, so it's
+easy to find and hand-edit. The skill then commits or opens the PR with that
+file's exact bytes, including any edit you made.
+
+Because the file sits in the working tree, the first time one of these skills runs
+in a repository it offers to add `claude-git-workflow/` to your `.gitignore`, and
+does so only if you say yes. One entry covers every skill in the plugin. Decline
+and the skill will tell you what happens instead — for `commit`, the message file
+gets staged along with your changes.
+
 ### Why learnings live in the project, not beside the skill
 
 The natural instinct is to keep `learnings.md` next to `SKILL.md`, the way a
@@ -98,7 +111,7 @@ writes a single flag into the project's `.claude/settings.json`:
 and points at one shared copy on your machine:
 
 ```
-~/.claude/plugins/cache/henryd-workflow/git-workflow/0.3.0/skills/open-pr/
+~/.claude/plugins/cache/henryd-workflow/git-workflow/0.4.0/skills/open-pr/
                                                      ↑
                                               version segment
 ```
@@ -111,7 +124,7 @@ Two consequences follow, and both are fatal to co-location:
    `develop` target would apply in an unrelated repo. Per-project learnings are
    structurally impossible there.
 2. **It is destroyed on every update.** The path contains the plugin version, so
-   `0.3.0/` becomes `0.4.0/` on the next `/plugin update` and anything written
+   `0.4.0/` becomes `0.5.0/` on the next `/plugin update` and anything written
    inside is gone.
 
 Keeping learnings in the consuming project fixes both, and adds a third benefit:

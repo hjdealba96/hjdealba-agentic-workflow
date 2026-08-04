@@ -18,7 +18,7 @@ allowed-tools: Bash, Read, Write
 Analyze the working tree, write a commit message to the **Conventional Commits 1.0.0**
 specification, and commit it after the user approves.
 
-The message is written to a scratch file outside the repository so the user can hand-edit
+The message is written to a scratch file at the repository root so the user can hand-edit
 it before committing. The commit then uses that file's exact bytes.
 
 ---
@@ -33,8 +33,11 @@ required trailer, a ticket-reference format. Apply anything relevant.
 **If the file does not exist, proceed with defaults. Do not create it.** It is created
 only when a learning is captured (see [Capturing Learnings](#capturing-learnings)).
 
-The specification below is global and always in force. Learnings only add
-repository-specific facts on top.
+The specification below is the global default. Learnings layer repository-specific facts on
+top of it, and where a learning explicitly contradicts a default, **the learning wins** —
+that's what makes one skill usable across repositories that disagree. A learning can only
+override what this skill presents as a convention, never the [Content Rules](#content-rules)
+on accuracy and secrets.
 
 ---
 
@@ -121,6 +124,33 @@ If a ticket ID is inferable from the branch or conversation, add a `Refs:` foote
 is found and the project's history shows it normally carries one, ask once whether there's
 a ticket to reference; don't block on the answer.
 
+#### Model attribution — required
+
+Every message ends with a co-author trailer naming the model that wrote it, as the last
+line of the footer block:
+
+```
+Co-Authored-By: <model display name> <noreply@anthropic.com>
+```
+
+**Name the model actually generating the commit**, taken from the current environment —
+`Claude Opus 5`, `Claude Sonnet 5`, `Claude Haiku 4.5`, and so on. Include a qualifier when
+the environment reports one, e.g. `Claude Opus 5 (1M context)`.
+
+Never copy a name from the examples in this skill, carry one over from an earlier commit in
+the history, or guess at a version. The point of the trailer is that `git log` records which
+model did which work; a wrong name is worse than no record.
+
+If the model identity genuinely isn't available, use `Claude <noreply@anthropic.com>`
+rather than inventing a version number.
+
+When the message has no other footer, the trailer still gets its own block separated by a
+blank line. When there are other footers, it goes last.
+
+**A repository can opt out.** Some teams don't credit models in their history. If learnings
+record that, omit the trailer entirely and don't raise it again — see
+[Capturing Learnings](#capturing-learnings).
+
 ---
 
 ## Content Rules
@@ -129,10 +159,13 @@ a ticket to reference; don't block on the answer.
 2. **Imperative mood throughout.**
 3. **Explain what and why, not how** — the code already shows how.
 4. **Never reference plan or investigation files.** Extract the content instead.
-5. **Human voice.** Write as the developer. Any attribution goes in a footer, not the prose.
+5. **Human voice.** Write as the developer. Attribution belongs in the required
+   [model co-author trailer](#model-attribution--required) — never in the description or
+   body, and never scattered through the prose.
 6. **Never include secrets or PII** — no tokens, keys, credentials, emails, personal names,
    internal URLs, or connection strings. If the diff contains any, warn the user and stop
-   before writing the message.
+   before writing the message. The model co-author trailer is the sole exception:
+   `noreply@anthropic.com` is a placeholder address, not anyone's personal one.
 
 ---
 
@@ -189,15 +222,43 @@ If the motivation genuinely isn't inferable, ask briefly rather than guessing.
 Apply the [Message Specification](#message-specification) and [Content Rules](#content-rules)
 above.
 
+Before moving on, check that the footer block ends with the model co-author trailer, naming
+the model currently running rather than one copied from an example or from the history.
+
 ### Step 4: Present for Review
 
-Write the message to a scratch file outside the repository:
+Write the message to a scratch file in `claude-git-workflow/` at the **repository root**,
+where it sits beside the code and is easy to open and edit:
 
 ```bash
-mkdir -p "${TMPDIR:-/tmp}/claude-git-workflow"
+mkdir -p "$(git rev-parse --show-toplevel)/claude-git-workflow"
 ```
 
-Write to `${TMPDIR:-/tmp}/claude-git-workflow/commit-message.md`.
+Write to `claude-git-workflow/commit-message.md`. Resolve the path from
+`git rev-parse --show-toplevel` rather than the current directory — the skill may be
+invoked from a subdirectory, and the file belongs at the root either way.
+
+#### Keep the directory out of version control
+
+`claude-git-workflow/` holds working files, never repository content. Check whether it is
+already ignored:
+
+```bash
+git check-ignore -q claude-git-workflow && echo ignored
+```
+
+If it is not ignored, propose the entry once — typically the first time this skill runs in
+a repository:
+
+> `claude-git-workflow/` isn't in `.gitignore`. Add it so these working files never get
+> committed? (yes / no)
+
+**Add it only on approval**, appending `claude-git-workflow/` to the root `.gitignore` and
+creating that file if it doesn't exist. Don't re-ask on later runs once the entry exists.
+
+If the user declines, say plainly that `git add -A` in Step 5 will stage
+`claude-git-workflow/commit-message.md` along with everything else, and let them decide
+whether to proceed.
 
 Display the message inline, give the path, and ask:
 
@@ -209,12 +270,14 @@ Revise and re-present until approved.
 
 Only after explicit approval.
 
-1. Stage — `git add -A`, or leave staging alone if the user had deliberately staged a subset
+1. Stage — `git add -A`, or leave staging alone if the user had deliberately staged a subset.
+   If a `.gitignore` entry was added in Step 4, that edit will be staged too — mention it so
+   the user isn't surprised to find it in the commit
 2. Re-read the scratch file so manual edits are picked up
 3. Commit with the file, never an inline message:
 
 ```bash
-git commit -F "${TMPDIR:-/tmp}/claude-git-workflow/commit-message.md"
+git commit -F "$(git rev-parse --show-toplevel)/claude-git-workflow/commit-message.md"
 ```
 
 `-F` guarantees the commit uses exactly what the user approved or edited. Never use `-m`.
@@ -227,16 +290,23 @@ git commit -F "${TMPDIR:-/tmp}/claude-git-workflow/commit-message.md"
 
 ## Examples
 
-Simple:
+**The model name in these trailers is illustrative.** Always substitute the model actually
+running, per [Model attribution](#model-attribution--required).
+
+Simple — the trailer is still its own block:
 
 ```
 fix: prevent duplicate API calls on retry
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ```
 
 Scoped by code area:
 
 ```
 feat(auth): add OAuth2 PKCE flow support
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ```
 
 With body:
@@ -247,9 +317,11 @@ refactor(db): extract connection pooling into shared module
 The pool configuration was duplicated across three services.
 Centralizing it reduces drift and makes pool size tunable in
 one place.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ```
 
-Scoped by ticket, with a ref:
+Scoped by ticket, with a ref — the trailer goes last:
 
 ```
 fix(ABC-2888): align badge on saved payment cards
@@ -258,6 +330,7 @@ The badge used a fixed top offset, which drifted on cards with
 two-line titles. Anchor it to the card header instead.
 
 Refs: ABC-2888
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ```
 
 Breaking:
@@ -269,6 +342,8 @@ The endpoint now returns `{ data: [], meta: { page, totalPages } }`
 instead of a flat array.
 
 BREAKING CHANGE: clients must update to handle the pagination wrapper
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ```
 
 ---
@@ -283,6 +358,7 @@ repository.**
 | "We use `feature:` not `feat:`" | Yes — repository convention |
 | "Scope by ticket ID, always" | Yes — repository convention |
 | "Every commit needs a `Refs:` trailer" | Yes — repository convention |
+| "Don't add the model co-author trailer" | Yes — repository convention |
 | "Our scopes are `app`, `domain`, `data`" | Yes — repository convention |
 | "Make this body shorter" | No — one-off edit |
 | "Call it `search` not `fuelsearch` here" | No — one-off edit |
