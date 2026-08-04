@@ -28,6 +28,34 @@ makes sense — the skills follow you into every repo:
 Skills are namespaced by plugin, so they're invoked as `/<plugin>:<skill>` — for
 example `/git-workflow:open-pr`.
 
+## Updating
+
+**Nothing updates on its own.** An install is pinned to a version directory in the
+plugin cache, and refreshing the catalog is a separate step from moving the
+install:
+
+```bash
+/plugin marketplace update henryd-workflow
+/plugin update git-workflow@henryd-workflow
+```
+
+Then restart Claude Code — a new version is not applied to a running session.
+The CLI equivalents are `claude plugin marketplace update <name>` and
+`claude plugin update <plugin>`.
+
+The first command isn't optional. Until the catalog is refreshed, the new
+`version` in `plugin.json` isn't visible, so the second has nothing to move to.
+Conversely, the catalog refreshing on its own doesn't upgrade anything — you can
+have current marketplace metadata and a months-old install at the same time.
+
+`/reload-plugins` is a different thing. It re-reads plugins in the current
+session, which is what you want when developing against a local marketplace (see
+[Local development](#local-development)), but it never fetches from GitHub.
+
+Your learnings survive updates. They live in the consuming repository under
+`.claude/learnings/<plugin>/<skill>.md`, not in the versioned cache directory
+that gets replaced — which is [the point](#why-learnings-live-in-the-project-not-beside-the-skill).
+
 ## Plugins
 
 ### `git-workflow` — `0.4.0`
