@@ -58,12 +58,12 @@ that gets replaced — which is [the point](#why-learnings-live-in-the-project-n
 
 ## Plugins
 
-### `git-workflow` — `0.4.0`
+### `git-workflow` — `0.5.0`
 
 | Skill | Invocation | What it does |
 | --- | --- | --- |
 | `commit` | `/git-workflow:commit`, or automatic | Reads the diff, writes a message to the [Conventional Commits 1.0.0](https://www.conventionalcommits.org) spec, and commits with your exact bytes after you approve. Infers scope from a ticket ID or the code area, matches the type vocabulary already in the repo's history, and credits the model that wrote the message in a `Co-Authored-By` trailer. |
-| `branch` | `/git-workflow:branch`, or automatic | Names branches to the [Conventional Branch](https://conventional-branch.github.io/) standard, checking existing branches so the name matches local convention. Asks for a ticket ID when the repo tracks work that way, and proposes a branch before implementation work starts on a trunk branch. |
+| `branch` | `/git-workflow:branch`, or automatic | Names branches to the [Conventional Branch](https://conventional-branch.github.io/) standard, checking existing branches so the name matches local convention. Detects the team's branching model — trunk-based, GitHub Flow, or GitFlow — and cuts the branch from the base that model prescribes, flagging GitFlow's back-merge obligation up front. Asks for a ticket ID when the repo tracks work that way, and proposes a branch before implementation work starts on a long-lived branch. |
 | `open-pr` | `/git-workflow:open-pr` only | Opens a GitHub PR through a gated sequential workflow. Discovers the target branch, PR template, and real label vocabulary from the repo; writes the body to a scratch file you can edit; scans for secrets; creates nothing without explicit approval. |
 
 `open-pr` is manual-invocation only (`disable-model-invocation: true`) because it
@@ -139,7 +139,7 @@ writes a single flag into the project's `.claude/settings.json`:
 and points at one shared copy on your machine:
 
 ```
-~/.claude/plugins/cache/henryd-workflow/git-workflow/0.4.0/skills/open-pr/
+~/.claude/plugins/cache/henryd-workflow/git-workflow/0.5.0/skills/open-pr/
                                                      ↑
                                               version segment
 ```
@@ -152,8 +152,8 @@ Two consequences follow, and both are fatal to co-location:
    `develop` target would apply in an unrelated repo. Per-project learnings are
    structurally impossible there.
 2. **It is destroyed on every update.** The path contains the plugin version, so
-   `0.4.0/` becomes `0.5.0/` on the next `/plugin update` and anything written
-   inside is gone.
+   that whole directory is replaced on the next `/plugin update` and anything
+   written inside it is gone.
 
 Keeping learnings in the consuming project fixes both, and adds a third benefit:
 the file is committed, so the whole team inherits the conventions instead of
@@ -208,6 +208,8 @@ claude-code-skills/
 │       │   └── evals/trigger.json
 │       ├── branch/
 │       │   ├── SKILL.md
+│       │   ├── reference/
+│       │   │   └── branching-models.md   # loaded only when the skill runs
 │       │   └── evals/trigger.json
 │       └── open-pr/
 │           ├── SKILL.md

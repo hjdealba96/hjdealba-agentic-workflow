@@ -94,6 +94,16 @@ Consequences when editing a skill:
   labels via `gh label list`, default branch via `gh repo view`. Learnings cover only what
   discovery can't reach.
 
+**Named profiles are the refinement of this.** Where the per-repo fact is a well-known
+*model* rather than a free-form rule, the model's semantics are universal and belong in the
+skill — `branch/reference/branching-models.md` holds what GitFlow and trunk-based each mean,
+because that's true everywhere. The learning records only `Model:` plus `Deviations:`. The
+deviations half is not optional: teams run "GitFlow without release branches" far more often
+than textbook GitFlow, and a bare enum would force every hybrid into a wrong answer.
+
+Keep such rules in **one** learning entry. A base-branch rule stored separately from the
+model that implies it is how a learnings file ends up contradicting itself.
+
 ### Review-then-act via scratch files
 
 Skills that produce something for approval write it to `claude-git-workflow/` at the root

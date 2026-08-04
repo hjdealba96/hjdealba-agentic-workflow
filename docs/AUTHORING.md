@@ -100,6 +100,21 @@ Supporting files (`reference.md`, `scripts/`) can live alongside `SKILL.md` in
 the skill directory and are loaded only when the skill is used — long reference
 material costs nothing until then.
 
+**When to split material into a reference file.** Move it out of `SKILL.md` when it
+is bulky, enumerable, and needed only after an earlier step selects which part
+applies. `branch/reference/branching-models.md` is the example: one profile per
+branching model, and a run reads exactly one of them. Keeping the procedure in
+`SKILL.md` and the lookup tables beside it also keeps the body scannable, which is
+what makes the numbered workflow work.
+
+**Don't reach for a separate skill to share knowledge between skills.** Skills
+don't compose — there is no `requires:` mechanism, so a `user-invocable: false`
+background skill has to win its own trigger competition. When the user says
+"create a branch", `branch` is what loads, and a companion skill holding the
+branching-model tables would fire unreliably; described broadly enough to fire
+reliably, it would start hijacking `commit` and `open-pr` requests instead. A
+bundled reference file inside the skill that needs it has neither problem.
+
 ## The learnings pattern
 
 Every skill in this marketplace follows the same two-tier split. It exists to
