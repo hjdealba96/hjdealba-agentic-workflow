@@ -3,7 +3,7 @@ name: Validate
 # The gate. Free, offline, deterministic, no secrets.
 #
 # Don't add a trigger-eval job here -- it needs an API key this repo doesn't have.
-# Reasoning in docs/AUTHORING.md; run them with scripts/run_trigger_eval.py.
+# Reasoning in docs/EVALS.md; run them with scripts/run_trigger_eval.py.
 
 on:
   push:

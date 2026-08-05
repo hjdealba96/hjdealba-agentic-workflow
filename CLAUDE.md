@@ -12,9 +12,10 @@ skill's description causes Claude to load it at the right moment.
 Two plugins: `git-workflow` (skills `commit`, `branch`, `open-pr`) and `docs-workflow`
 (skills `docs-system`, `reference-doc`).
 
-Full authoring conventions live in [`docs/AUTHORING.md`](./docs/AUTHORING.md); the
-distribution rationale is in [`README.md`](./README.md). Read `AUTHORING.md` before adding
-or restructuring a skill — it records measured results, not just preferences.
+Full authoring conventions live in [`docs/AUTHORING.md`](./docs/AUTHORING.md), and how to
+measure a skill in [`docs/EVALS.md`](./docs/EVALS.md); the distribution rationale is in
+[`README.md`](./README.md). Read `AUTHORING.md` before adding or restructuring a skill —
+it records measured results, not just preferences.
 
 ## Commands
 
@@ -55,7 +56,7 @@ workflow that can never run reads as coverage that doesn't exist.
 The wrapper is not optional indirection: the upstream runner it calls **silently
 reports 0.00 on every query on Windows.** It also handles the harness preconditions
 that otherwise produce false negatives. Detail in its docstring, measured scores in
-`AUTHORING.md`.
+[`docs/EVALS.md`](./docs/EVALS.md).
 
 ## Architecture
 

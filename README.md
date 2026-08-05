@@ -213,7 +213,8 @@ hjdealba-agentic-workflow/
 ├── .claude-plugin/
 │   └── marketplace.json          # the catalog
 ├── docs/
-│   └── AUTHORING.md              # conventions for writing new skills
+│   ├── AUTHORING.md              # conventions for writing new skills
+│   └── EVALS.md                  # measuring that a skill still triggers and works
 ├── git-workflow/
 │   ├── .claude-plugin/
 │   │   └── plugin.json
@@ -314,7 +315,7 @@ python3 scripts/validate_structure.py
 ```
 
 Trigger evals are not run in CI; they need Claude API credentials this repository
-doesn't have. See [`docs/AUTHORING.md`](./docs/AUTHORING.md#why-they-dont-run-in-ci).
+doesn't have. See [`docs/EVALS.md`](./docs/EVALS.md#why-they-dont-run-in-ci).
 
 ### Changes land through pull requests
 
