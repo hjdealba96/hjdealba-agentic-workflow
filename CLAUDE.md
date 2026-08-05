@@ -145,6 +145,10 @@ instead — that's the review step.
   path, or `~`, because installs are copied into the cache. This constrains files shipped
   *with* the skill only; reading and writing paths in the repository the skill runs in
   (learnings, scratch files) is expected.
+- **`${CLAUDE_PLUGIN_ROOT}` is the plugin root, not the skill directory.** A reference
+  beside `SKILL.md` needs the full `${CLAUDE_PLUGIN_ROOT}/skills/<skill>/reference/...`
+  path; omitting `skills/<skill>/` resolves to nothing and fails only at invocation time.
+  `branch` shipped that way for several releases. CI now fails on it.
 
 ### Versioning
 
