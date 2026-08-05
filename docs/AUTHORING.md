@@ -398,9 +398,44 @@ a hypothetical for production, but the negatives still guard a real risk: if
 someone forks this and drops the flag, an over-broad description would start
 hijacking commit and branch requests.
 
-Behavior evals — does the skill produce correct output — are a separate,
-heavier flow needing git fixtures per scenario and grader subagents. Not built
-yet.
+### Behavior evals
+
+**Trigger evals only measure whether a skill loads.** Nothing above says the output is
+any good, and those are separate failure modes — a body can say "triage first" and the
+model can still go straight to writing what was asked for.
+
+There is no scripted suite yet, but the method is worked out and two of its constraints
+are worth not rediscovering:
+
+- **`claude plugin eval` is still gated.** `--help` is fully populated with real flags,
+  which reads as shipped, but `plugin eval init --bare` and a real run both print
+  ``plugin eval` is currently in early access` and do nothing.
+- **Plugin skills do not execute under `claude -p`.** The `Skill` tool returns
+  `<error>Execute skill: <plugin>:<name></error>`. Measured across three at once —
+  `docs-workflow:docs-system`, `docs-workflow:reference-doc`, and the long-shipping
+  `git-workflow:branch` — all failed identically, so this is the harness, not the
+  plugin. They resolve by name and fail at invocation.
+
+The workaround is the one the trigger-eval harness already relies on: **write the skill
+body into the fixture's `.claude/commands/<name>.md`.** Project commands *do* execute
+under `-p`. One adjustment is required — `${CLAUDE_PLUGIN_ROOT}` does not substitute for
+a project command, so replace it with a real path first, and prefer copying the bundled
+reference files into the fixture. A path outside the working directory is blocked by the
+sandbox, which produces a confound that looks like a skill defect.
+
+Then run with `--permission-mode acceptEdits` so writes actually land, and assert on the
+filesystem afterwards.
+
+**Prefer mechanically falsifiable assertions.** "Never reformats an existing file" is
+checkable with `sha256sum` before and after; whether a gap report is *insightful* is not.
+The checksum case caught nothing, which is the point — it can only be passed honestly.
+
+This flow found one real defect on its first run. `docs-system` was told to copy the
+bundled template "unmodified" and had no instruction for the case where the read fails,
+so it authored a replacement: 69 lines against the real file's 97, a third of the guidance
+silently gone, flagged only in prose that a reader may skip. Both skills now stop instead.
+**Any instruction to copy a bundled file needs an explicit failure branch**, or the model
+will helpfully invent the contents.
 
 ### Future: `claude plugin eval`
 
