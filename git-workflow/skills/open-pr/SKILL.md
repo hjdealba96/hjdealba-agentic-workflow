@@ -34,6 +34,46 @@ repeated.
 
 ---
 
+## Execution Contract
+
+**This procedure is not advisory. Every step runs, in order, on every invocation.**
+
+The *content* is negotiable — title wording, which sections appear, how much detail,
+labels, reviewers. The *procedure* is not.
+
+| Rule | |
+| --- | --- |
+| Steps 0–6 run **in order, every time** | Including for a one-commit branch or a docs-only change |
+| No step is skipped for being "obvious" | A small PR is where an unmeasured title and a missing footer slip through |
+| Each gate produces **evidence** | Not a claim that it was done — the [preflight block](#preflight-block--required) prints what was found |
+| A failed gate stops the run | Fix it and re-check. Never proceed past it, and never report it as passed |
+
+### The six gates
+
+| Gate | Step | Cannot proceed until |
+| --- | --- | --- |
+| **Learnings read** | 0 | `.claude/learnings/git-workflow/open-pr.md` has been read, or confirmed absent |
+| **Target resolved** | 1 | The target branch was *discovered* — from learnings, `gh repo view`, or the user — never assumed to be `main` |
+| **Diff read** | 2 | `origin/<target>` was fetched and the diff read against it, this run |
+| **Secrets scanned** | 2 | The diff has been scanned for the values listed under [Security and Privacy](#security-and-privacy) |
+| **Title measured** | 5 | The title's character count has been *counted*, not estimated. The 72-character target is soft; taking and reporting the measurement is not |
+| **Footer present** | 5 | The scratch file's last line has been checked for the [footer](#footer) |
+| **User approved** | 6 | The user has approved this exact title and body |
+
+### What a user instruction can and cannot change
+
+| The user can | The user cannot |
+| --- | --- |
+| Change the title, any section, the labels, the reviewers, draft status | Skip the diff read, the secrets scan, the title measurement, or the scratch file |
+| Pre-approve: "open it without showing me" counts as the Step 6 approval, and the preflight block is still reported | Get a `--body` with inline text; the body always comes from the file, via `--body-file` |
+| Override conventions durably through [learnings](#capturing-learnings) | Have a PR opened against an unverified target branch |
+| Decline the `.gitignore` entry | Have content described that the diff doesn't support |
+
+**Why this skill in particular.** It writes to a real remote, where a mistake is public and
+often notification-generating. A commit can be amended in silence; a PR cannot.
+
+---
+
 ## Step 0: Load Project Learnings
 
 Read `.claude/learnings/git-workflow/open-pr.md` from the repository root if it exists.
@@ -89,6 +129,9 @@ next. Do not skip, combine, or reorder them.**
 2. Gather context            6. Confirm and submit
 3. Determine PR status
 ```
+
+Six of these steps carry a gate that must produce evidence before the next step begins —
+see the [Execution Contract](#execution-contract).
 
 ---
 
@@ -146,7 +189,7 @@ Two sources matter, and they answer different questions.
 
 **Conversation context — the "why."** If this session included planning, implementing, or
 debugging the work, that history explains intent, decisions, and tradeoffs far better
-than a diff can. Lean on it for the Summary.
+than a diff can. Lean on it for the Description.
 
 **Git context — the "what."** First refresh the target ref, then compare against
 the **remote** target. A stale local copy of the target branch produces a commit
@@ -170,6 +213,18 @@ If the remote isn't named `origin`, resolve it with `git remote` and substitute.
 Read the full diff as well when the change is small enough to warrant it.
 
 **When the two disagree, trust the diff for what changed and the conversation for why.**
+
+**Discover the title convention.** Read what this repository's PR titles actually look
+like before composing one:
+
+```bash
+gh pr list --state all --limit 20 --json title --jq '.[].title'
+```
+
+The existing titles win over this skill's default format. If they are Conventional-Commits
+style (`fix(scope): lowercase description`), match that; if they lead with a ticket ID,
+match that. A skill-shaped title in a repository that uses a different shape is noise in
+the PR list, and the PR list is the one place titles are read side by side.
 
 **Discover the PR template**
 
@@ -212,9 +267,13 @@ This governs reviewers and labels downstream. Drafts get no reviewers.
 
 ### Step 4: Determine Sections and Labels
 
-**Visual reference.** If the diff touches UI, ask whether to include a visual section.
-When the change modifies existing UI, use a before/after table; when it is entirely new,
-a single column is enough.
+**Visual reference.** If the diff touches UI, ask whether to include a
+`## Visual Reference` section. When the change modifies existing UI, use a before/after
+table; when it is entirely new, a single column is enough.
+
+The name is deliberately broader than "Screenshots": a screen recording of an interaction,
+a short clip of an animation, or a before/after of a generated artifact are often the only
+honest way to show the change. A still frame can't show a transition.
 
 ```md
 | **Before** | **After** |
@@ -286,63 +345,126 @@ directly before approving. **Do not create the PR in this step.**
 
 #### Title
 
+Use the shape the repository already uses, discovered in Step 2. Absent any history to
+match, default to Conventional-Commits style, so the PR title and the commits under it
+read the same way:
+
 ```
-Type: Short description
+type(scope): short description
 ```
 
-Capitalize the type; keep the description under 60 characters, imperative mood
-(`Add login flow`, not `Added login flow`). Types: `Feat`, `Fix`, `Docs`, `Refactor`,
-`Style`, `Test`, `Chore`, `Perf`, `Ci`.
+Imperative mood (`add login flow`, not `added login flow`). Types: `feat`, `fix`, `docs`,
+`refactor`, `style`, `test`, `chore`, `perf`, `ci`.
 
 When a ticket ID exists and the project prefixes titles with it, use
 `ABC-123: Exact ticket name` instead, applying any normalization rule from learnings.
 
-Hard limit: 256 characters. If the ticket name would exceed it, shorten the description
-while preserving the ID and the core meaning.
+##### Length — measured, not estimated
+
+| Limit | Value | Firmness | Why |
+| --- | --- | --- | --- |
+| Target | **72 characters**, whole title including any prefix | Soft | Matches the commit header's absolute limit, so a PR and its commit can share a line. Past this, GitHub truncates in the PR list, notification emails, and the merge-commit subject |
+| Hard cap | **256 characters** | Hard | GitHub's own limit; a title this long has already failed |
+
+**Taking the measurement is mandatory. The 72 is not a wall.**
+
+```bash
+TITLE="feat(commit): enforce line widths and step gates"
+printf '%s' "$TITLE" | awk '{ printf "title %d/72\n", length }'
+```
+
+Over 72, try to shorten first — the detail belongs in the body, which has no such limit.
+Preserve the type, scope, and any ticket ID while trimming; those are what make the title
+scannable.
+
+If it still doesn't fit, **an over-length title may ship**, on one condition: report the
+count and say in a line why it stands. A ticket name reproduced verbatim is a reason. A
+scope that is genuinely long is a reason. "It reads better" is not — that's the case where
+the body should be carrying the words.
+
+This is the one soft limit in the skill, and deliberately so: unlike a commit header, a PR
+title sometimes has to mirror an external system exactly. What is never optional is
+knowing the number before deciding.
+
+```
+✗ fix(docs-workflow): stop instead of reconstructing an unreadable bundled file  (77)
+✓ fix(docs-workflow): stop on an unreadable bundled file                         (54)
+```
+
+The rejected title is not wrong, only unread — the part explaining the behavior change
+gets truncated in exactly the views where someone is scanning for it.
 
 #### Description structure (when no template exists)
 
 ```md
-## Summary
+## Description
 
 [1–3 sentences: what this does and why it matters]
 
-## Changes
+## Changes Made
 
-### Primary
-- [The main change — what the PR is fundamentally about]
+- [Specific change, named concretely]
+- [Specific change, named concretely]
 
-### Secondary
-- [Supporting changes made alongside it]
+## How to Test
 
-### Technical Notes
-- [Implementation details that help a reviewer, or carry consequences]
+1. [Step a reviewer can actually follow]
+2. [What they should see]
 
-## Visual Reference
-[Only if requested in Step 4]
+## Related Issues
 
-## Test Plan
-[Only when there is something behavioral to verify]
+[Closes #123 — or omit]
 ```
 
-**Only Summary is mandatory.** Every other section must earn its place:
+**Only Description is mandatory.** Every other section must earn its place:
 
-- **Secondary** — omit when there is one logical change.
-- **Technical Notes** — omit for docs, config, or anything with no technical implication.
-- **Test Plan** — omit entirely for changes with no behavioral impact. Never write filler
-  like "N/A" or "visual inspection."
+- **Changes Made** — omit when the change is a single thing the Description already
+  states. Two sections saying the same thing is worse than one.
+- **How to Test** — omit only when there is genuinely nothing to run or look at. This is
+  the most-skipped and most-valuable section in a PR: it is the difference between a
+  reviewer verifying behavior and a reviewer guessing at it. Never pad it with "visual
+  inspection" or "N/A" — no section beats a hollow one.
+- **Related Issues** — omit when there is no ticket. Never invent one.
 
-Add sections beyond this set when they genuinely help — `## Migration Guide`,
-`## API Changes`, `## Breaking Changes`.
+**Be specific in Changes Made.** "Added rate limiting middleware to the `/api/auth`
+endpoint" is a review aid; "updated files" and "improved the code" are not. If a bullet
+would read the same on any other PR, it isn't saying anything.
+
+##### Sections to add by change type
+
+The base structure is a floor, not a ceiling. What a reviewer needs varies by what kind of
+change this is:
+
+| Change type | Add |
+| --- | --- |
+| Bug fix | `## Root Cause` — what actually caused it, not just what was changed — and `## Regression Risk` |
+| Hotfix | `## Severity`, `## Incident` link, `## Rollback Plan`. Keep everything else minimal; urgency is the point |
+| New feature | `## Visual Reference` when there is UI — screenshot, recording, or clip — and a `## Feature Flag` note when it ships dark |
+| Breaking change | `## Breaking Changes` and `## Migration Guide`, stating what consumers must do |
+| API change | A request/response table showing before and after |
+| Performance | The measurement — before and after numbers, and how they were taken |
+
+**No generic checklist in a generated body.** "Self-reviewed the code", "tests pass",
+"follows style guidelines" — a checkbox you tick about your own work carries no
+information, and this skill's [gates](#the-six-gates) already cover that ground.
+A checklist earns its place in a repository's *template*, where a human ticks it; not in
+a description this skill writes.
+
+**Keep it short enough that it doesn't read as homework.** A description nobody finishes
+is worth less than three honest sentences.
 
 #### Writing principles
 
 **Lead with significance.** The first thing read should be the most important change,
 never boilerplate or a minor fix.
 
-**Write for a mixed audience.** A product manager should follow the Summary. A developer
-should find enough detail below it to review properly. This is neither a design doc nor a
-commit log.
+**Write for a mixed audience.** A product manager should follow the Description. A
+developer should find enough detail below it to review properly. This is neither a design
+doc nor a commit log.
+
+**Give the reviewer the intent.** Without it they reverse-engineer the diff line by line
+to work out why the change exists, which takes far longer and still guesses. One sentence
+of intent replaces that entirely.
 
 **Be specific, not verbose.** "Add pagination to search results" beats "Updated the search
 functionality to include the ability to paginate through results." Say what changed, not
@@ -374,6 +496,34 @@ End the body with exactly this line, verbatim, separated by a blank line:
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
+**Check it rather than trusting it** — this is the single easiest line in the procedure to
+drop, and a missing footer is invisible until someone audits the PR list:
+
+```bash
+PR="$(git rev-parse --show-toplevel)/claude-git-workflow/pr-content.md"
+tail -1 "$PR" | grep -q 'Generated with \[Claude Code\]' \
+  && echo "footer present" || echo "FOOTER MISSING"
+```
+
+#### Preflight block — required
+
+Display the title and body inline, give the path, and print the preflight block. Six
+lines, this order, every run — it is the evidence that each [gate](#the-six-gates)
+actually ran, and it is what makes a skipped step visible instead of silent:
+
+```
+learnings   none            (or: 2 rules applied)
+target      main            (gh repo view · 1 commit ahead · push needed)
+template    none found      (or: .github/PULL_REQUEST_TEMPLATE.md — 6 sections)
+title       48/72          (over target: "84/72 — ticket name verbatim")
+secrets     scanned, none found
+footer      present
+```
+
+Report what happened, never what should have happened. `learnings none` means the file
+was looked for and absent — not that it wasn't checked. If a line can't be filled in
+honestly, the step it reports on didn't finish; go finish it.
+
 ---
 
 ### Step 6: Confirm and Submit
@@ -382,7 +532,9 @@ Ask:
 
 > Review the content above (or edit `<path>` directly). Ready to open the PR?
 
-Wait for an explicit answer. If changes are requested, revise and re-confirm.
+Wait for an explicit answer. **Silence is not approval, and approval of an earlier
+revision is not approval of the current one.** If changes are requested, revise, re-run
+the title and footer checks, reprint the preflight block, and re-confirm.
 
 **Once approved:**
 
@@ -482,5 +634,11 @@ The file is committed, so it benefits the whole team.
 | No labels in repo | Skip labeling; mention it |
 | `gh pr create` failed | Report the error; check whether the PR was partly created |
 | Sensitive data in diff | Stop immediately and warn |
+| Title over 72 | Try shortening into the Description first. If it stands, report the count and one line of why — never let it pass unremarked |
+| Title over 256 | Hard failure. Shorten it; `gh` will reject it anyway |
+| Footer check prints `FOOTER MISSING` | Append it and re-check. Never report the gate as passed |
+| Asked to open the PR without a review step | Run Steps 0–5, print the preflight block, open it — treat the request as pre-approval, not as permission to skip |
+| Asked to pass the body with `--body` | Decline that one detail, say why in a sentence (`--body-file` preserves the user's exact bytes), and use the file |
+| Repository template exists but a section doesn't apply | Omit the section or say briefly why it doesn't apply. Never leave a heading with "N/A" under it |
 
 For any blocking error, state plainly what failed and what the user needs to do.
