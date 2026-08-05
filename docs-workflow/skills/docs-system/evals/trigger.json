@@ -1,0 +1,12 @@
+[
+  {"query": "set up the documentation system for this project", "should_trigger": true},
+  {"query": "organize the docs folder", "should_trigger": true},
+  {"query": "set up the reference docs", "should_trigger": true},
+  {"query": "initialize documentation for this repo", "should_trigger": true},
+  {"query": "how should this project's docs be organized?", "should_trigger": true},
+  {"query": "write a reference doc for our testing conventions", "should_trigger": false},
+  {"query": "document the architecture", "should_trigger": false},
+  {"query": "update the README with install instructions", "should_trigger": false},
+  {"query": "add a docstring to this function", "should_trigger": false},
+  {"query": "commit my changes", "should_trigger": false}
+]

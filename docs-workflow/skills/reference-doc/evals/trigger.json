@@ -1,0 +1,12 @@
+[
+  {"query": "write a reference doc for our testing conventions", "should_trigger": true},
+  {"query": "document the architecture", "should_trigger": true},
+  {"query": "add a reference file for the design tokens", "should_trigger": true},
+  {"query": "write up how feature flags work in this project", "should_trigger": true},
+  {"query": "document this pattern in the docs", "should_trigger": true},
+  {"query": "set up the documentation system for this project", "should_trigger": false},
+  {"query": "organize the docs folder", "should_trigger": false},
+  {"query": "add a KDoc comment to this function", "should_trigger": false},
+  {"query": "update the README with install instructions", "should_trigger": false},
+  {"query": "commit my changes", "should_trigger": false}
+]

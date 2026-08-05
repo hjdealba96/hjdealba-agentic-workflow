@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "docs-workflow",
+  "displayName": "Docs Workflow",
+  "version": "0.1.0",
+  "description": "Establish and maintain a project documentation reference system: tiered docs, a template new reference files follow, and an index that stays in sync.",
+  "author": {
+    "name": "Henry De Alba",
+    "url": "https://github.com/hjdealba96"
+  },
+  "homepage": "https://github.com/hjdealba96/hjdealba-agentic-workflow",
+  "repository": "https://github.com/hjdealba96/hjdealba-agentic-workflow",
+  "license": "MIT",
+  "keywords": ["documentation", "docs", "reference", "knowledge-base", "technical-writing", "workflow"]
+}

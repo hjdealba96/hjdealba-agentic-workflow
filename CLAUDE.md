@@ -9,7 +9,8 @@ code — every deliverable is a prompt (`SKILL.md`) plus JSON manifests. There i
 compile and no runtime. "Correct" means the plugin loader accepts the structure and the
 skill's description causes Claude to load it at the right moment.
 
-Currently one plugin: `git-workflow` (skills `commit`, `branch`, `open-pr`).
+Two plugins: `git-workflow` (skills `commit`, `branch`, `open-pr`) and `docs-workflow`
+(skills `docs-system`, `reference-doc`).
 
 Full authoring conventions live in [`docs/AUTHORING.md`](./docs/AUTHORING.md); the
 distribution rationale is in [`README.md`](./README.md). Read `AUTHORING.md` before adding
@@ -23,6 +24,7 @@ skill frontmatter:
 ```bash
 claude plugin validate . --strict
 claude plugin validate ./git-workflow --strict
+claude plugin validate ./docs-workflow --strict
 ```
 
 Test a change without publishing, by registering the working copy as a local marketplace:
@@ -127,6 +129,12 @@ collide with a same-named file in a consuming repo. Full reasoning in `AUTHORING
 **The suggestion is not a gate.** If the user declines, the skill states the consequence
 (`commit` stages the message file with `git add -A`; `open-pr` leaves an untracked file)
 and proceeds. Deliberately no pathspec exclusion — the user is informed and decides.
+
+**This pattern applies only where the artifact is consumed by a command.** `docs-workflow`
+writes no scratch files: its output *is* the tracked file under `docs/`, reviewable with
+`git diff` and revertible with `git checkout`. Staging that through a scratch directory
+would add a copy step and no review value. Those skills present the plan before writing
+instead — that's the review step.
 
 ### Structural rules the loader enforces
 

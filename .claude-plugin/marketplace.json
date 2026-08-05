@@ -13,6 +13,13 @@
       "description": "Language-agnostic git workflow: Conventional Commits messages, Conventional Branch naming, and stakeholder-readable pull requests.",
       "category": "workflow",
       "tags": ["git", "commits", "branches", "pull-requests", "conventional-commits"]
+    },
+    {
+      "name": "docs-workflow",
+      "source": "./docs-workflow",
+      "description": "Establish and maintain a project documentation reference system: tiered docs, a template new reference files follow, and an index that stays in sync.",
+      "category": "documentation",
+      "tags": ["documentation", "docs", "reference", "knowledge-base", "technical-writing"]
     }
   ]
 }

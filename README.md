@@ -69,6 +69,21 @@ that gets replaced — which is [the point](#why-learnings-live-in-the-project-n
 `open-pr` is manual-invocation only (`disable-model-invocation: true`) because it
 publishes to a real remote. The other two can be invoked by Claude when relevant.
 
+### `docs-workflow` — `0.1.0`
+
+| Skill | Invocation | What it does |
+| --- | --- | --- |
+| `docs-system` | `/docs-workflow:docs-system`, or automatic | Sets up the structure reference documentation lives in — the durable and working-notes tiers, the index, and the template new files follow. Surveys an existing `docs/` tree first and reports which parts of the format are unfilled, with the evidence. Adapts to the repository's own filename convention and index location instead of imposing one, and never renames or reformats a file that already exists. |
+| `reference-doc` | `/docs-workflow:reference-doc`, or automatic | Writes one reference file. Triages first — durable reference, task-scoped note, code comment, or README — then reads the repository's own `_template.md` so the result matches local format, checks whether the topic already has a home, keeps `status` honest, and adds the row to the index. |
+
+Both are safe to auto-invoke: they write local, reviewable, revertible files and
+present the plan before doing it.
+
+The split between them is deliberate. `docs-system` runs roughly once per
+repository; `reference-doc` runs whenever there's something to write. They share
+the template and the slot definitions from `docs-workflow/reference/`, so there
+is one definition of what a reference document is.
+
 More plugins will be added as the skills exist to fill them — likely candidates
 are Android native, Kotlin Multiplatform, API design, and Python. Nothing is
 registered here until it ships real skills, so every entry in the catalog is
@@ -214,9 +229,28 @@ hjdealba-agentic-workflow/
 │       └── open-pr/
 │           ├── SKILL.md
 │           └── evals/trigger.json
+├── docs-workflow/
+│   ├── .claude-plugin/
+│   │   └── plugin.json
+│   ├── reference/                        # shared by both skills below
+│   │   ├── _template.md                  # the format scaffolded into consuming repos
+│   │   └── slots.md                      # what each section of a reference doc is for
+│   └── skills/
+│       ├── docs-system/
+│       │   ├── SKILL.md
+│       │   └── evals/trigger.json
+│       └── reference-doc/
+│           ├── SKILL.md
+│           └── evals/trigger.json
 ├── LICENSE
 └── README.md
 ```
+
+`docs-workflow/reference/` sits at the **plugin** root rather than inside one
+skill, because both skills need the same two files and a plugin has no way to
+share a reference between skills other than location. Reached as
+`${CLAUDE_PLUGIN_ROOT}/reference/<file>.md`. Nothing outside `skills/` is loaded
+into context on its own — these are read only when a skill says to read them.
 
 Two structural rules the plugin loader enforces:
 
@@ -259,6 +293,7 @@ to check skill frontmatter:
 ```bash
 claude plugin validate . --strict
 claude plugin validate ./git-workflow --strict
+claude plugin validate ./docs-workflow --strict
 ```
 
 Test a change without publishing by adding the working copy as a local
