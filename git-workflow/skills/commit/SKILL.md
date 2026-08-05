@@ -23,6 +23,45 @@ it before committing. The commit then uses that file's exact bytes.
 
 ---
 
+## Execution Contract
+
+**This procedure is not advisory. Every step runs, in order, on every invocation.**
+
+The *output* is negotiable — wording, scope, how much body detail, whether a trailer
+appears. The *procedure* is not. A commit produced by skipping steps is not this skill's
+output, it's a guess wearing its name.
+
+| Rule | |
+| --- | --- |
+| Steps 0–5 run **in order, every time** | Including for a one-line change, a typo fix, or work you just did yourself in this session |
+| No step is skipped for being "obvious" | The size of the diff never justifies skipping a step. Small diffs are where invented scopes and stale trailers come from |
+| Each gate produces **evidence** | Not a claim that it was done — the [preflight block](#preflight-block--required) prints what was measured |
+| A failed gate stops the run | Fix and re-run the gate. Never proceed past it, and never report it as passed |
+
+### The four gates
+
+| Gate | Step | Cannot proceed until |
+| --- | --- | --- |
+| **Learnings read** | 0 | `.claude/learnings/git-workflow/commit.md` has been read, or confirmed absent |
+| **Diff read** | 1 | The actual diff has been read this run — never write a message from memory of the session |
+| **Widths measured** | 4 | The awk check has been *run* and printed, not estimated |
+| **User approved** | 5 | The user has approved this exact message |
+
+### What a user instruction can and cannot change
+
+| The user can | The user cannot |
+| --- | --- |
+| Change any part of the message — type, scope, wording, body, footers | Skip the diff read, the width check, or the scratch file |
+| Pre-approve: "commit it without showing me" counts as the Step 5 approval, and the preflight block is still reported | Get a `git commit -m`; the commit always comes from the file, via `-F` |
+| Override conventions durably through [learnings](#capturing-learnings) | Have content committed that the diff doesn't support |
+| Decline the `.gitignore` entry | — |
+
+"Just commit it", "quick commit", and "don't overthink it" are instructions about
+*verbosity*, not permission to drop steps. Run the procedure — it costs one diff read and
+one awk call — and keep the presentation brief.
+
+---
+
 ## Step 0: Load Project Learnings
 
 Read `.claude/learnings/git-workflow/commit.md` from the repository root if it exists.
@@ -32,6 +71,10 @@ required trailer, a ticket-reference format. Apply anything relevant.
 
 **If the file does not exist, proceed with defaults. Do not create it.** It is created
 only when a learning is captured (see [Capturing Learnings](#capturing-learnings)).
+
+Attempt the read on every run — a file added since the last run is exactly the case this
+step exists for. The outcome is reported on the `learnings` line of the
+[preflight block](#preflight-block--required).
 
 The specification below is the global default. Learnings layer repository-specific facts on
 top of it, and where a learning explicitly contradicts a default, **the learning wins** —
@@ -53,9 +96,43 @@ on accuracy and secrets.
 [optional footer(s)]
 ```
 
-- **Header** — required, aim for 50 characters, hard limit 72
-- **Body** — separated by a blank line, wrapped at 72 columns, explains the *why*
+- **Header** — required, one line, ≤ 50 characters (see [Line widths](#line-widths))
+- **Body** — separated by a blank line, hard-wrapped at 72 columns, explains the *why*
 - **Footers** — separated by a blank line; `BREAKING CHANGE`, refs, trailers
+
+### Line widths
+
+| Part | Limit | What to do when it doesn't fit |
+| --- | --- | --- |
+| Header | **50 characters**, including `type(scope): ` | Rewrite it. Shorten the description, or drop the scope if it isn't earning its width. |
+| Header | **72 characters — absolute** | Never ship this. Tooling truncates past it, and 51–72 is a last resort, not a second budget. |
+| Body line | **72 columns** | Hard-wrap it yourself. Git does not wrap for you, and terminals don't either. |
+| Footer line | one line each | Do **not** wrap a footer. `Refs:`, `Closes:`, and `Co-Authored-By:` are single tokens; a wrapped trailer stops being a trailer. |
+
+Two exemptions, and only these:
+
+1. **Footer lines**, per the table above.
+2. **A body line holding one unbreakable token** — a URL, a long path, a fully
+   qualified identifier — with no whitespace to wrap at. Put it on its own line and let
+   it overflow rather than breaking it.
+
+Everything else fits. Detail that won't fit in the header belongs in the body, which is
+what the body is for.
+
+```
+✗ feat(notifications): add retry with exponential backoff for failed webhooks  (75)
+✓ feat(notifications): retry failed webhook sends                              (47)
+```
+
+The rejected header is over both limits and says nothing the body can't say better. When
+the description is genuinely irreducible, the body carries the rest:
+
+```
+fix(auth): refresh tokens before expiry                                        (39)
+
+Tokens were refreshed on the first 401, which surfaced as a
+visible sign-out. Refresh at 90% of TTL instead.
+```
 
 ### Type
 
@@ -97,9 +174,12 @@ colon. No trailing period. State what changed, not how.
 
 ### Body
 
-Include one when the *why* isn't obvious from the description. Wrap at 72 columns. Explain
-motivation, contrast with previous behavior, note consequences. Backtick code references:
+Include one when the *why* isn't obvious from the description. Explain motivation, contrast
+with previous behavior, note consequences. Backtick code references:
 `TokenRefreshManager.refresh()`.
+
+Hard-wrap every line at 72 columns as you write it — see [Line widths](#line-widths).
+Reflowing a finished paragraph is harder than writing it wrapped.
 
 ### Breaking changes
 
@@ -171,7 +251,13 @@ record that, omit the trailer entirely and don't raise it again — see
 
 ## Workflow
 
+Every step is mandatory — see the [Execution Contract](#execution-contract).
+
 ### Step 1: Read the Changes
+
+**Always run these, even if you made the changes yourself earlier in this session.** What
+is in the working tree is the only source of truth for the message; your memory of the
+session is not, and it silently omits whatever else the tree picked up.
 
 Start compact and go deeper only when needed.
 
@@ -220,7 +306,8 @@ If the motivation genuinely isn't inferable, ask briefly rather than guessing.
 ### Step 3: Compose the Message
 
 Apply the [Message Specification](#message-specification) and [Content Rules](#content-rules)
-above.
+above. Write the header to fit 50 and wrap the body at 72 from the start — Step 4 measures
+both, and a message that fails there gets rewritten anyway.
 
 Before moving on, check that the footer block ends with the model co-author trailer, naming
 the model currently running rather than one copied from an example or from the history.
@@ -260,20 +347,63 @@ If the user declines, say plainly that `git add -A` in Step 5 will stage
 `claude-git-workflow/commit-message.md` along with everything else, and let them decide
 whether to proceed.
 
-Display the message inline, give the path, and ask:
+#### Measure the line widths — required
+
+Never eyeball this. Once the file is written, measure it:
+
+```bash
+MSG="$(git rev-parse --show-toplevel)/claude-git-workflow/commit-message.md"
+awk 'NR==1 { h = length }
+     length > (NR==1 ? 50 : 72) { printf "OVER  L%-3d %3d chars: %s\n", NR, length, $0 }
+     NR>1 && length > m { m = length }
+     END { printf "header %d/50, longest line %d/72\n", h, m }' "$MSG"
+```
+
+Every `OVER` line is a defect unless it is one of the two
+[exemptions](#line-widths). **Rewrite the message, overwrite the file, and re-run the
+check.** Do not present a message that fails it, and do not present one you haven't
+measured — the reason this limit gets ignored is that "aim for 50" is easy to skip and a
+printed number is not.
+
+#### Preflight block — required
+
+Display the message inline, give the path, and print the preflight block. Four lines,
+this order, every run — it is the evidence that each [gate](#the-four-gates) actually
+ran, and it is what makes skipping a step visible instead of silent:
+
+```
+learnings   none            (or: 3 rules applied)
+staging     all changes     (or: staged subset — 4 files)
+widths      header 47/50, longest line 68/72
+trailer     Claude Opus 5
+```
+
+Report what happened, never what should have happened. `learnings none` means the file
+was looked for and absent — not that it wasn't checked. If a line can't be filled in
+honestly, the step it reports on didn't finish; go finish it.
+
+Then ask:
 
 > Ready to commit, or would you like changes? You can also edit the file directly.
 
-Revise and re-present until approved.
+Revise and re-present until approved — re-running the width check and reprinting the
+block after every revision, since a revision can break what the last one passed.
+
+**Keep it brief when asked, but keep it.** If the user wants less ceremony, the block is
+already four lines; drop the inline message display before dropping the block.
 
 ### Step 5: Commit
 
-Only after explicit approval.
+**Only after explicit approval of this exact message.** Approval of an earlier revision
+is not approval of the current one. A blanket "commit it without showing me" given
+earlier in the session counts — nothing else does, and silence never does.
 
 1. Stage — `git add -A`, or leave staging alone if the user had deliberately staged a subset.
    If a `.gitignore` entry was added in Step 4, that edit will be staged too — mention it so
    the user isn't surprised to find it in the commit
-2. Re-read the scratch file so manual edits are picked up
+2. Re-read the scratch file so manual edits are picked up. If the user's own edits push a
+   line over the limits, mention it once and commit their bytes anyway — the width rule
+   governs what this skill writes, not what the user decides to write
 3. Commit with the file, never an inline message:
 
 ```bash
@@ -312,7 +442,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 With body:
 
 ```
-refactor(db): extract connection pooling into shared module
+refactor(db): extract shared connection pool
 
 The pool configuration was duplicated across three services.
 Centralizing it reduces drift and makes pool size tunable in
@@ -360,6 +490,7 @@ repository.**
 | "Every commit needs a `Refs:` trailer" | Yes — repository convention |
 | "Don't add the model co-author trailer" | Yes — repository convention |
 | "Our scopes are `app`, `domain`, `data`" | Yes — repository convention |
+| "Headers up to 72 are fine here" | Yes — repository convention |
 | "Make this body shorter" | No — one-off edit |
 | "Call it `search` not `fuelsearch` here" | No — one-off edit |
 
@@ -402,3 +533,8 @@ learning contradicts an existing one, update that entry rather than appending a 
 | Pre-commit hook rejects | Report the hook output; offer to fix and retry |
 | Not a git repository | Stop and say so |
 | Merge conflict markers in diff | Stop; ask the user to resolve first |
+| Header can't reach 50 without losing accuracy | It can. Move the detail to the body and shorten the header |
+| Width check still reports `OVER` after a rewrite | Rewrite again. Do not present it, and do not annotate it as acceptable |
+| `awk` unavailable | Count with any available tool and report the same numbers; never substitute an estimate |
+| Asked to commit without a review step | Run Steps 0–4, print the preflight block, commit — treat the request as pre-approval, not as permission to skip |
+| Asked to use `git commit -m` | Decline that one detail, say why in a sentence (`-F` preserves the user's exact bytes), and commit from the file |
