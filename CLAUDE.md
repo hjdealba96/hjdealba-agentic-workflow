@@ -25,7 +25,12 @@ skill frontmatter:
 claude plugin validate . --strict
 claude plugin validate ./git-workflow --strict
 claude plugin validate ./docs-workflow --strict
+python3 scripts/validate_structure.py
 ```
+
+The last one is what CI gates on — offline and deterministic, covering the structural
+rules the schema can't express. **Trigger evals do not run in CI** (no Claude
+credentials on this repository), so they stay a manual step.
 
 Test a change without publishing, by registering the working copy as a local marketplace:
 
@@ -38,25 +43,19 @@ Test a change without publishing, by registering the working copy as a local mar
 Run a skill's trigger eval (the closest thing here to a test suite):
 
 ```bash
-cd <a real git repo containing a .claude/ directory>
-PYTHONPATH=<skill-creator>/skills/skill-creator \
-  python3 -m scripts.run_eval \
-    --eval-set <skill>/evals/trigger.json \
-    --skill-path <skill> \
-    --runs-per-query 3 \
-    --num-workers 1
+python3 scripts/run_trigger_eval.py                                  # every skill
+python3 scripts/run_trigger_eval.py docs-workflow/skills/reference-doc
 ```
 
-Three preconditions on that runner, each of which has already produced hours of false
-negatives (detail in `AUTHORING.md`):
+**This is a local tool, not CI tooling.** It spawns `claude -p` per query, so it needs
+the CLI and working credentials — which is why it sits in `scripts/` rather than
+`.github/`. Don't add a workflow for it; this repository has no API key, and a
+workflow that can never run reads as coverage that doesn't exist.
 
-- **`--num-workers 1` always.** Parallel workers create identically-described command
-  files that shadow each other; parallel scores are noise.
-- **Run from inside a real git repository** with uncommitted changes. The harness sets
-  `cwd` to the nearest ancestor containing `.claude/`; a non-git directory makes every
-  git-scoped skill under-trigger for the wrong reason.
-- **Move aside any same-named skill in `~/.claude/skills/`.** Claude picks the real skill
-  over the harness stub and detection credits neither, scoring 0.00 on every positive.
+The wrapper is not optional indirection: the upstream runner it calls **silently
+reports 0.00 on every query on Windows.** It also handles the harness preconditions
+that otherwise produce false negatives. Detail in its docstring, measured scores in
+`AUTHORING.md`.
 
 ## Architecture
 

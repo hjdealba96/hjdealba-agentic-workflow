@@ -1,0 +1,56 @@
+name: Validate
+
+# The gate. Free, offline, deterministic, no secrets.
+#
+# Don't add a trigger-eval job here -- it needs an API key this repo doesn't have.
+# Reasoning in docs/AUTHORING.md; run them with scripts/run_trigger_eval.py.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PyYAML
+        run: pip install --quiet pyyaml
+
+      - name: Structural validation
+        run: python3 scripts/validate_structure.py
+
+  manifest-schema:
+    # JSON-schema conformance via the first-party validator. Separate job, and
+    # allowed to fail: it needs the CLI installed, and while `plugin validate` does
+    # not appear to require credentials, that hasn't been confirmed on a runner
+    # that has never been onboarded. Promote to a required check once a run proves
+    # it works; the structure job above is the gate until then.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Validate marketplace catalog
+        run: claude plugin validate . --strict
+
+      - name: Validate every plugin manifest
+        run: |
+          status=0
+          for manifest in */.claude-plugin/plugin.json; do
+            plugin=$(dirname "$(dirname "$manifest")")
+            echo "::group::$plugin"
+            claude plugin validate "./$plugin" --strict || status=1
+            echo "::endgroup::"
+          done
+          exit $status
