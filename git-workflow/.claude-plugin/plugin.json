@@ -11,12 +11,5 @@
   "homepage": "https://github.com/hjdealba96/hjdealba-agentic-workflow",
   "repository": "https://github.com/hjdealba96/hjdealba-agentic-workflow",
   "license": "MIT",
-  "keywords": [
-    "git",
-    "commits",
-    "branches",
-    "pull-requests",
-    "conventional-commits",
-    "workflow"
-  ]
+  "keywords": ["git", "commits", "branches", "pull-requests", "conventional-commits", "workflow"]
 }
