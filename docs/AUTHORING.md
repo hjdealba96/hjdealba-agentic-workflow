@@ -91,6 +91,21 @@ The body is the prompt. What has worked well in the existing skills:
   `${CLAUDE_PLUGIN_ROOT}`, never via `../`, an absolute path, or `~`. Installs
   are copied into a cache, so those break.
 
+  **`${CLAUDE_PLUGIN_ROOT}` is the plugin's installation directory, not the skill's.**
+  A reference file sitting beside `SKILL.md` must therefore be written
+  `${CLAUDE_PLUGIN_ROOT}/skills/<skill>/reference/<file>.md` — the `skills/<skill>/`
+  segment is not optional. `branch` shipped for several releases with
+  `${CLAUDE_PLUGIN_ROOT}/reference/branching-models.md`, which resolved to nothing, so
+  the branching-model profiles its first step depends on were never readable. Nothing
+  surfaced it: the placeholder substitutes correctly (it resolves anywhere it appears
+  in skill content), the resulting path simply doesn't exist, and the failure shows up
+  only when a user invokes the skill. `scripts/validate_structure.py` now fails the
+  build on it.
+
+  A reference shared by two skills in one plugin is the exception worth knowing: put it
+  at the plugin root, as `docs-workflow/reference/` does, and the short path is then
+  correct.
+
   This constrains *bundled* files only. A skill may still read and write paths in
   the repository it's running in — that's exactly what the learnings file and the
   scratch files under `claude-git-workflow/` are, and both are resolved at runtime

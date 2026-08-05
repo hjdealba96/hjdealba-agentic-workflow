@@ -224,32 +224,26 @@ def check_skill(plugin_dir: Path, skill_dir: Path) -> None:
             )
 
     # Bundled files are reached through ${CLAUDE_PLUGIN_ROOT} because installs are
-    # copied into a cache. A path that resolves to nothing is a file the skill
-    # cannot read at runtime, and nothing reports it until someone invokes it.
+    # copied into a cache. The variable is "the absolute path to the plugin's
+    # installation directory" -- the plugin root, NOT the skill directory -- and it
+    # substitutes anywhere it appears in skill content. So the path must resolve
+    # relative to the plugin root, and a path that doesn't is a file the skill cannot
+    # read at runtime with nothing reporting it until someone invokes the skill.
     #
-    # Accepted relative to either the plugin root or the skill directory. The two
-    # skills in this repo disagree about which the variable means, and that has not
-    # been verified against a real install -- so a ref that resolves under exactly
-    # one of them is reported as a warning, not treated as correct or as broken.
+    # git-workflow:branch shipped for several releases with a skill-relative path
+    # here, unable to read the branching-model profiles its first step depends on.
     for body_file in sorted({skill_md, *skill_dir.rglob("*.md")}):
         text = body_file.read_text(encoding="utf-8")
         for rel in sorted(set(PLUGIN_ROOT_REF.findall(text))):
-            from_plugin = (plugin_dir / rel).exists()
-            from_skill = (skill_dir / rel).exists()
-            if from_plugin:
+            if (plugin_dir / rel).exists():
                 continue
-            if from_skill:
-                warn(
-                    f"${{CLAUDE_PLUGIN_ROOT}}/{rel} resolves only relative to the "
-                    f"skill directory, not the plugin root. If the variable means "
-                    f"the plugin root, this file is unreachable at runtime",
-                    body_file,
-                )
-                continue
+            hint = ""
+            if (skill_dir / rel).exists():
+                correct = (skill_dir / rel).relative_to(plugin_dir).as_posix()
+                hint = f". It resolves from the skill directory -- write ${{CLAUDE_PLUGIN_ROOT}}/{correct}"
             fail(
-                f"${{CLAUDE_PLUGIN_ROOT}}/{rel} resolves to nothing -- not "
-                f"{(plugin_dir / rel).relative_to(ROOT).as_posix()} nor "
-                f"{(skill_dir / rel).relative_to(ROOT).as_posix()}",
+                f"${{CLAUDE_PLUGIN_ROOT}}/{rel} does not resolve from the plugin root "
+                f"({(plugin_dir / rel).relative_to(ROOT).as_posix()}){hint}",
                 body_file,
             )
 

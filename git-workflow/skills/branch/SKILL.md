@@ -129,7 +129,7 @@ Resolve in this order, stopping at the first that answers:
    > merge back to `main`), or GitFlow (`develop` for features, `main` for releases)?
 
 Then read the matching profile from
-`${CLAUDE_PLUGIN_ROOT}/reference/branching-models.md`. It carries the base branch, PR
+`${CLAUDE_PLUGIN_ROOT}/skills/branch/reference/branching-models.md`. It carries the base branch, PR
 target, vocabulary, and post-merge obligation for each model, plus the deviations worth
 expecting.
 
@@ -274,7 +274,7 @@ before the branch exists:
 If the plan implies a branch that will live for weeks in a trunk-based repository, say so
 before creating it and propose the first shippable slice instead. Per-model detail, including
 the parallel-change sequence for wide refactors, is in
-`${CLAUDE_PLUGIN_ROOT}/reference/branching-models.md`.
+`${CLAUDE_PLUGIN_ROOT}/skills/branch/reference/branching-models.md`.
 
 ---
 

@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "git-workflow",
   "displayName": "Git Workflow",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Language-agnostic git workflow: Conventional Commits messages, Conventional Branch naming, and stakeholder-readable pull requests.",
   "author": {
     "name": "Henry De Alba",
@@ -11,5 +11,12 @@
   "homepage": "https://github.com/hjdealba96/hjdealba-agentic-workflow",
   "repository": "https://github.com/hjdealba96/hjdealba-agentic-workflow",
   "license": "MIT",
-  "keywords": ["git", "commits", "branches", "pull-requests", "conventional-commits", "workflow"]
+  "keywords": [
+    "git",
+    "commits",
+    "branches",
+    "pull-requests",
+    "conventional-commits",
+    "workflow"
+  ]
 }
