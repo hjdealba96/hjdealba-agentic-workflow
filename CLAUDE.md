@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repository is
 
-A Claude Code **plugin marketplace** named `henryd-workflow`. It ships no application
+A Claude Code **plugin marketplace** named `hjdealba-agentic-workflow`. It ships no application
 code — every deliverable is a prompt (`SKILL.md`) plus JSON manifests. There is nothing to
 compile and no runtime. "Correct" means the plugin loader accepts the structure and the
 skill's description causes Claude to load it at the right moment.
@@ -28,8 +28,8 @@ claude plugin validate ./git-workflow --strict
 Test a change without publishing, by registering the working copy as a local marketplace:
 
 ```bash
-/plugin marketplace add ./claude-code-skills
-/plugin install git-workflow@henryd-workflow
+/plugin marketplace add .
+/plugin install git-workflow@hjdealba-agentic-workflow
 /reload-plugins
 ```
 

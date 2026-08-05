@@ -1,4 +1,4 @@
-# henryd-workflow
+# hjdealba-agentic-workflow
 
 A personal [Claude Code](https://code.claude.com/docs) **plugin marketplace** — a
 curated set of skills that encode how I actually work, installable into any
@@ -15,14 +15,14 @@ Add the marketplace once — registration is per-user, so this carries into ever
 repository you open:
 
 ```bash
-/plugin marketplace add hjdealba96/claude-code-skills
+/plugin marketplace add hjdealba96/hjdealba-agentic-workflow
 ```
 
 Then install the plugin. `git-workflow` is language-agnostic, so user scope
 makes sense — the skills follow you into every repo:
 
 ```bash
-/plugin install git-workflow@henryd-workflow
+/plugin install git-workflow@hjdealba-agentic-workflow
 ```
 
 Skills are namespaced by plugin, so they're invoked as `/<plugin>:<skill>` — for
@@ -35,8 +35,8 @@ plugin cache, and refreshing the catalog is a separate step from moving the
 install:
 
 ```bash
-/plugin marketplace update henryd-workflow
-/plugin update git-workflow@henryd-workflow
+/plugin marketplace update hjdealba-agentic-workflow
+/plugin update git-workflow@hjdealba-agentic-workflow
 ```
 
 Then restart Claude Code — a new version is not applied to a running session.
@@ -58,7 +58,7 @@ that gets replaced — which is [the point](#why-learnings-live-in-the-project-n
 
 ## Plugins
 
-### `git-workflow` — `0.5.0`
+### `git-workflow` — `0.5.1`
 
 | Skill | Invocation | What it does |
 | --- | --- | --- |
@@ -133,13 +133,13 @@ recording.** Installing a plugin does not copy it into your repository. It
 writes a single flag into the project's `.claude/settings.json`:
 
 ```json
-{ "enabledPlugins": { "git-workflow@henryd-workflow": true } }
+{ "enabledPlugins": { "git-workflow@hjdealba-agentic-workflow": true } }
 ```
 
 and points at one shared copy on your machine:
 
 ```
-~/.claude/plugins/cache/henryd-workflow/git-workflow/0.5.0/skills/open-pr/
+~/.claude/plugins/cache/hjdealba-agentic-workflow/git-workflow/0.5.1/skills/open-pr/
                                                      ↑
                                               version segment
 ```
@@ -194,7 +194,7 @@ every edit. Central distribution is worth more than adjacency.
 ## Repository layout
 
 ```
-claude-code-skills/
+hjdealba-agentic-workflow/
 ├── .claude-plugin/
 │   └── marketplace.json          # the catalog
 ├── docs/
@@ -265,15 +265,15 @@ Test a change without publishing by adding the working copy as a local
 marketplace:
 
 ```bash
-/plugin marketplace add ./claude-code-skills
-/plugin install git-workflow@henryd-workflow
+/plugin marketplace add .
+/plugin install git-workflow@hjdealba-agentic-workflow
 /reload-plugins
 ```
 
 ## Notes
 
 - **Marketplace names are unique per user.** Registering another marketplace
-  named `henryd-workflow` replaces this one.
+  named `hjdealba-agentic-workflow` replaces this one.
 - **Team and Enterprise organizations can restrict marketplaces.** If an admin
   has set `strictKnownMarketplaces`, this marketplace needs allowlisting before
   it can be added. Personal accounts are unaffected.
