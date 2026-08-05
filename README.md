@@ -2,7 +2,8 @@
 
 A personal [Claude Code](https://code.claude.com/docs) **plugin marketplace** — a
 curated set of skills that encode how I actually work, installable into any
-repository across any GitHub organization.
+repository across any GitHub organization. The focus is mobile development and
+the engineering workflow around it.
 
 The skills here are opinionated on purpose. They reflect one developer's
 conventions rather than a neutral baseline, so the intended way to use this as
