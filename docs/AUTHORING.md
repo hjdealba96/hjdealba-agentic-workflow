@@ -278,6 +278,21 @@ routing works.
 
 ### Running them
 
+Use the wrapper. It handles every precondition below, forces `--num-workers 1`, and
+prints a table shaped for pasting into a pull request:
+
+```bash
+python3 scripts/run_trigger_eval.py                                  # every skill
+python3 scripts/run_trigger_eval.py docs-workflow/skills/reference-doc
+```
+
+It needs the `claude` CLI and working credentials, which is why it lives in
+`scripts/` and not under `.github/` — **it is a local developer tool and cannot run
+in this repository's CI.** See [Why they don't run in CI](#why-they-dont-run-in-ci).
+
+Calling the upstream runner directly still works, and is what the wrapper does under
+the hood:
+
 ```bash
 cd <a real git repo with a .claude/ directory>
 PYTHONPATH=<skill-creator>/skills/skill-creator \
@@ -288,7 +303,16 @@ PYTHONPATH=<skill-creator>/skills/skill-creator \
     --num-workers 1
 ```
 
-Two things about the runner that will otherwise cost you hours:
+Four things about that runner, each of which has already cost hours:
+
+- **It is POSIX-only and fails silently on Windows.** `select()` on a pipe raises
+  `WinError 10093`, and `SKILL.md` is read as cp1252. Either fault produces **0.00 on
+  every positive with every negative "passing"** — indistinguishable from a
+  description that triggers nothing. `docs-system` measured 0/10 that way, then 10/10
+  with the description untouched. `scripts/run_trigger_eval.py` patches both in a
+  throwaway copy and its docstring carries the detail. So: **don't call the upstream
+  runner directly on Windows, and don't simplify the wrapper away** — it looks like a
+  pointless indirection until you lose a morning to a clean 0/10.
 
 - **Always use `--num-workers 1`.** Parallel workers each create an identically-
   described command file, all visible to every concurrent query, and detection
@@ -309,6 +333,33 @@ Two things about the runner that will otherwise cost you hours:
   `commit` and `branch` were immune only because they'd been renamed away from
   `conventional-*`.
 
+### Why they don't run in CI
+
+**Trigger evals are a local step, and that's a constraint rather than a preference.**
+The runner spawns `claude -p` once per query per run, so a full sweep of five skills
+at three runs each is roughly 150 API invocations. This repository has no Claude
+credentials available to Actions, so there is nothing for the runner to authenticate
+with.
+
+Scores also move between runs — `commit` measured 9/9 while `branch` measured 6/8 on
+the same harness — so even with credentials a strict threshold would be red on `main`
+for reasons that aren't regressions. Any future CI eval should report a baseline
+before it gates anything.
+
+What CI covers instead is `scripts/validate_structure.py` — offline, deterministic, no
+secrets — checking the structural rules the JSON schema can't express and the loader
+accepts silently. Its docstring enumerates them; that list is not repeated here,
+because a copy of it in prose is a copy that goes stale. Run it the way CI does:
+
+```bash
+python3 scripts/validate_structure.py
+```
+
+**Don't build CI tooling for the eval runner.** It needs an Anthropic API key in
+repository secrets, this repository has none, and a workflow that can never run is
+worse than no workflow — it reads as coverage that doesn't exist. `scripts/run_trigger_eval.py`
+is deliberately outside `.github/` for the same reason.
+
 ### Writing descriptions that trigger
 
 Measured, not theorized. `commit` scores 9/9 and `branch` scored 4/8 with nearly
@@ -322,6 +373,16 @@ What moved the number:
   wordings a user would type outperform abstract descriptions of when to apply.
 - **State the prohibition explicitly** — "Never run `git checkout -b` directly;
   consult this skill first."
+
+**Position within the phrase list measurably matters.** `reference-doc` listed eight
+quoted phrases and scored 8/10: the three that fired were positions 1–3, and both
+failures sat at 5–6. Moving the two failures to the front took it to 9/10 —
+`"document this pattern in the docs"` went 0/3 to 2/3, and nothing that had been
+passing dropped below threshold. Treat the list as ranked, not as a set, and put the
+phrasings you most expect a user to type first.
+
+Current scores: `docs-system` 10/10, `reference-doc` 9/10, `commit` 9/9,
+`branch` 6/8.
 
 ### Known limits
 

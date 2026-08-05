@@ -242,9 +242,19 @@ hjdealba-agentic-workflow/
 │       └── reference-doc/
 │           ├── SKILL.md
 │           └── evals/trigger.json
+├── .github/
+│   ├── workflows/validate.yml            # the CI gate
+│   └── PULL_REQUEST_TEMPLATE.md
+├── scripts/
+│   ├── validate_structure.py             # run locally and by CI
+│   └── run_trigger_eval.py               # local only — needs the Claude CLI
 ├── LICENSE
 └── README.md
 ```
+
+`run_trigger_eval.py` is deliberately **not** under `.github/`. It spawns `claude -p`
+per query, so it can only run somewhere with working credentials — and this repository
+has none in Actions.
 
 `docs-workflow/reference/` sits at the **plugin** root rather than inside one
 skill, because both skills need the same two files and a plugin has no way to
@@ -295,6 +305,24 @@ claude plugin validate . --strict
 claude plugin validate ./git-workflow --strict
 claude plugin validate ./docs-workflow --strict
 ```
+
+Plus the structural checks CI runs — offline, and they catch the failures the JSON
+schema can't express, like a `${CLAUDE_PLUGIN_ROOT}` path that resolves to nothing:
+
+```bash
+python3 scripts/validate_structure.py
+```
+
+Trigger evals are not run in CI; they need Claude API credentials this repository
+doesn't have. See [`docs/AUTHORING.md`](./docs/AUTHORING.md#why-they-dont-run-in-ci).
+
+### Changes land through pull requests
+
+Not bare commits to `main` — the structural checks run on pull requests, so a direct
+push skips the only automated gate this repository has.
+[`.github/PULL_REQUEST_TEMPLATE.md`](./.github/PULL_REQUEST_TEMPLATE.md) covers the
+parts that fail silently: the `plugin.json` version bump, and the trigger-eval scores
+that have to be pasted in because CI can't produce them.
 
 Test a change without publishing by adding the working copy as a local
 marketplace:

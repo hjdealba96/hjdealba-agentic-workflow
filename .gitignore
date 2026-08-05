@@ -14,3 +14,7 @@ desktop.ini
 # Scratch files written by the git-workflow skills (commit messages, PR bodies).
 # These skills run in this repository too, so the entry they propose belongs here.
 claude-git-workflow/
+
+# Probe command files written by the trigger-eval harness into the project root it
+# picks. scripts/run_trigger_eval.py removes them, but a killed run leaves them.
+.claude/commands/*-skill-*.md
