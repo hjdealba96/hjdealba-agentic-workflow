@@ -91,6 +91,11 @@ If there is no template in the repository, read
 `docs-system` can install it so the next file doesn't have to rediscover the format — but
 don't stop to set up the system. Write the file they asked for.
 
+**If that bundled file can't be read either, stop and say so.** Never write the document
+from a remembered version of the format. A file that has most of the spine and silently
+omits the rest still gets committed, indexed, and trusted — and the omission is invisible
+to everyone downstream.
+
 For what each section is *for* — and how to recognize the same slot under a different heading
 name — read `${CLAUDE_PLUGIN_ROOT}/reference/slots.md`.
 
@@ -297,6 +302,7 @@ template already states, and the two will disagree.
 | --- | --- |
 | No `docs/` directory at all | Say so, mention `docs-system`, and offer to write the single file at a sensible default path rather than stopping |
 | No template in the repository | Use the bundled default, mention `docs-system` once, continue |
+| Neither the repository's template nor the bundled one can be read | **Stop.** Report both paths. Never write the file from a remembered format |
 | The repository's template is malformed or unreadable | Report what's wrong, fall back to the bundled default for this file, don't rewrite theirs |
 | Topic is already covered by an existing file | Propose editing that file instead; create a second one only if the user chooses to |
 | The user asks for a reference file on task-scoped work | Say which tier it belongs in and why, offer to write it there instead. If they still want a reference file, write it — state the assumption and move on |

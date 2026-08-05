@@ -126,6 +126,12 @@ On approval, write:
 3. `docs/local/.gitkeep` only if the working-notes tier is tracked. An ignored directory
    needs no placeholder.
 
+**If the bundled template can't be read, stop and say so.** Report the path and write
+nothing. Do **not** author a replacement from the slot names in this skill: a plausible
+but incomplete template is worse than no template, because it looks finished and nobody
+re-checks it. Measured — one reconstruction attempt produced 69 lines against the real
+file's 97, silently dropping a third of the guidance while reading as complete.
+
 Then Step 7 for the `.gitignore` entry.
 
 **There are no reference files yet, and that's fine.** Don't invent one to fill the index.
@@ -240,6 +246,9 @@ is the one a writer actually opens.
 4. **Never moves a file between tiers.** Promotion is the user's `git mv`.
 5. **Never creates the learnings file** unless a learning is approved.
 6. **Never imposes the kebab-case default on a repository that uses another convention.**
+7. **Never reconstructs a bundled file it couldn't read.** Stop and report the path. This
+   applies to `_template.md` and `slots.md` equally — a gap report written from a
+   half-remembered slot list is a wrong answer delivered confidently.
 
 **No scratch file.** Unlike the `git-workflow` skills, the artifacts here *are* repository
 files under `docs/`, reviewable in place with `git diff` and revertible with `git checkout`.
@@ -310,6 +319,7 @@ it as shared.
 | Both `docs/` and `documentation/` exist | Stop and ask which is authoritative. Never scaffold into one while the other holds real content |
 | Reference files use two different filename conventions | Report the split, use the majority for new files, and don't rename anything |
 | A `_template.md` exists but doesn't describe any file present | Report it — the template was likely adopted after those files were written. Offer migration as a separate job |
+| The bundled `_template.md` or `slots.md` can't be read | **Stop.** Report the path and that it was unreadable. Never write a reconstructed version — an incomplete template that reads as complete is the worst available outcome |
 | Index exists in two places already | Report both, ask which is authoritative, offer to record it as a learning. Don't create a third |
 | Learnings say the index is in `CLAUDE.md` but it isn't there anymore | Trust the repository, mention the discrepancy once, offer to update the entry |
 | The user asks to migrate existing files during setup | Finish the setup first, then handle migration as its own reviewed pass, one file at a time |

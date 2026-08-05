@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "docs-workflow",
   "displayName": "Docs Workflow",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Establish and maintain a project documentation reference system: tiered docs, a template new reference files follow, and an index that stays in sync.",
   "author": {
     "name": "Henry De Alba",
