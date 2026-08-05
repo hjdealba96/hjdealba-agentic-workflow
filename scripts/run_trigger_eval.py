@@ -17,7 +17,7 @@ runner cannot run on Windows as shipped and its failure mode is silent:
 
 Both patches are applied to a throwaway copy; the plugin cache is never touched.
 The detection logic is left exactly as upstream wrote it, so scores stay comparable
-to the ones recorded in docs/AUTHORING.md. The patches assert their anchors, so an
+to the ones recorded in docs/EVALS.md. The patches assert their anchors, so an
 upstream change fails loudly instead of silently reverting to a 0.00 sweep.
 
 Usage:
