@@ -1,0 +1,16 @@
+[
+  {"query": "set up detekt in this project", "should_trigger": true},
+  {"query": "can you add static analysis to this Android app?", "should_trigger": true},
+  {"query": "we need a Kotlin linter with a pre-commit hook and a CI check", "should_trigger": true},
+  {"query": "how should we adopt detekt in this existing codebase?", "should_trigger": true},
+  {"query": "add ktlint formatting checks to our KMP shared module", "should_trigger": true},
+  {"query": "nothing stops bad Compose code from landing in this repo", "should_trigger": true},
+  {"query": "fix these detekt violations in the payment module", "should_trigger": false},
+  {"query": "why is detekt failing on my PR?", "should_trigger": false},
+  {"query": "bump detekt from 1.23.8 to 2.0", "should_trigger": false},
+  {"query": "add an Android Lint baseline for the XML resources", "should_trigger": false},
+  {"query": "set up the documentation system for this repo", "should_trigger": false},
+  {"query": "commit these changes", "should_trigger": false},
+  {"query": "raise the MagicNumber threshold in our detekt.yml", "should_trigger": false},
+  {"query": "write unit tests for the greeting use case", "should_trigger": false}
+]

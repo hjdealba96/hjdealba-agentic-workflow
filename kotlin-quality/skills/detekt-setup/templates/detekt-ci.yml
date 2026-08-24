@@ -1,0 +1,91 @@
+# GitHub Actions gate for detekt.
+#
+# Copy to .github/workflows/detekt.yml and replace every <PLACEHOLDER>.
+# Read reference/surfaces.md before editing: the two-step split and the
+# explicitly-named typed task are not stylistic choices.
+name: Detekt
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: detekt-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write # required for the SARIF upload below
+
+jobs:
+  detekt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # 0 is required only if you enforce on changed files (ratchet mode).
+          # Shallow clones cannot compute the merge base.
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '<JDK_VERSION>'
+
+      # --- Guard the baseline ---------------------------------------------------
+      # A baseline is a debt ledger. `--create-baseline` rewrites it and exits 0
+      # with the violation still in the source, so suppressing looks identical to
+      # fixing unless CI notices.
+      #
+      # Two diffs on purpose: the commit-to-commit form is blind to an
+      # UNCOMMITTED rewrite, which is exactly how the ratchet gets defeated.
+      # A legitimate change (repo-wide format, newly enabled rule group) should
+      # need an explicit override in the PR.
+      - name: Baseline unchanged
+        run: |
+          base="origin/${{ github.base_ref }}"
+          git diff --exit-code "$base...HEAD" -- <CONFIG_DIR>/ >/dev/null &&
+          git diff --exit-code HEAD -- <CONFIG_DIR>/ >/dev/null
+
+      # --- Correctness: needs type resolution ----------------------------------
+      # Name the TYPED task. Never `./gradlew check`: it depends only on the plain
+      # `detekt` task, which runs in light mode, and on a KMP project points at
+      # source dirs that do not exist (measured: 1 of 15 files analyzed, passing).
+      #
+      # Pick ONE canonical typed task per module. `commonMain` belongs to every
+      # target's main compilation, so running all of them reports the same finding
+      # once per target.
+      - name: Correctness (full analysis)
+        run: ./gradlew --no-daemon <TYPED_TASK>
+
+      # --- Formatting + PSI rules: whole tree ----------------------------------
+      # Cache keyed on the setup script so a version bump invalidates it.
+      - name: Cache detekt jars
+        uses: actions/cache@v4
+        with:
+          path: <CONFIG_DIR>/*.jar
+          key: detekt-jars-${{ hashFiles('<SETUP_SCRIPT>') }}
+
+      - name: Formatting and PSI rules
+        run: ./detekt-format
+
+      # Ratchet alternative — enforce only on files this PR touches. Use instead
+      # of the step above when the formatting strategy is changed-files-only.
+      # - name: Formatting (changed files)
+      #   run: |
+      #     files=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- '*.kt' '*.kts' \
+      #             | paste -sd, -)
+      #     [ -z "$files" ] && exit 0
+      #     ./detekt-changed "$files"
+
+      # --- Annotate the diff ---------------------------------------------------
+      # Findings show inline on the PR instead of only in the log.
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: <SARIF_PATH>
+          category: detekt

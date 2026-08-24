@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "kotlin-quality",
+  "displayName": "Kotlin Quality",
+  "version": "0.1.0",
+  "description": "Set up static analysis for Kotlin, Android, and Kotlin Multiplatform projects: detekt wired to the IDE, a pre-commit hook, and CI, from one shared config.",
+  "author": {
+    "name": "Henry De Alba",
+    "url": "https://github.com/hjdealba96"
+  },
+  "homepage": "https://github.com/hjdealba96/hjdealba-agentic-workflow",
+  "repository": "https://github.com/hjdealba96/hjdealba-agentic-workflow",
+  "license": "MIT",
+  "keywords": ["detekt", "kotlin", "android", "kotlin-multiplatform", "static-analysis", "ktlint", "compose", "linting"]
+}
