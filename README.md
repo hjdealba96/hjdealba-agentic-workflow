@@ -85,6 +85,26 @@ repository; `reference-doc` runs whenever there's something to write. They share
 the template and the slot definitions from `docs-workflow/reference/`, so there
 is one definition of what a reference document is.
 
+### `kotlin-quality` — `0.1.0`
+
+| Skill | Invocation | What it does |
+| --- | --- | --- |
+| `detekt-setup` | `/kotlin-quality:detekt-setup`, or automatic | Stands up [detekt](https://detekt.dev) in a Kotlin, Android, or Kotlin Multiplatform repository: one config and one set of baselines enforced in the IDE, a pre-commit hook, and a GitHub Actions gate. Surveys the repo first, then resolves the version set from the project's own Kotlin and Gradle versions, picks a delivery mode from evidence, and stages adoption by measured finding count rather than guessing from lines of code. |
+
+Scope is narrow on purpose: a new project, or first-time adoption into an
+existing one. Pointed at a repository that already has detekt, it audits against
+the surface matrix, reports the gaps, and stops — retuning someone's existing
+rules is a different job with a different risk profile.
+
+The design is unusually evidence-led because detekt has several failure modes
+that report success. In a Kotlin Multiplatform module the default source
+directories match nothing, `check` depends only on the untyped task, and detekt
+2.x made type resolution opt-in — each of which yields a green run over an empty
+or shallow analysis. So the skill's verification step plants a known violation
+and asserts the run goes **red**, and compares the analyzed-file count against
+`git ls-files`. A clean result that was never measured against a violating input
+is not evidence.
+
 More plugins will be added as the skills exist to fill them — likely candidates
 are Android native, Kotlin Multiplatform, API design, and Python. Nothing is
 registered here until it ships real skills, so every entry in the catalog is

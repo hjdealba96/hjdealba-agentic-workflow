@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Committed detekt settings for the Android Studio / IntelliJ plugin.
+
+  Copy to .idea/detekt.xml and replace every {{PLACEHOLDER}}. Paths are
+  $PROJECT_DIR$-relative so the file is portable across machines.
+
+  NOTE the placeholder style. Every other template in this skill uses
+  angle brackets; this one cannot, because a literal "&lt;" is illegal inside an
+  XML attribute value. Double braces keep the file well-formed, which matters:
+  the IDE plugin silently ignores settings it cannot parse.
+
+  The plugin bundles its own detekt engine, so it is NOT a delivery mode. What it
+  needs from you is the config, the baselines, and any rule-plugin jars. Compose
+  rules require the detekt-compose uber jar here, which is a different artifact
+  from the Gradle coordinate io.nlopez.compose.rules:detekt. Without it there are
+  no Compose hints in the editor.
+
+  Committing this file means a developer who clones the repo only has to install
+  the plugin: Settings, then Plugins, then Marketplace, then "detekt", Install.
+-->
+<project version="4">
+  <component name="DetektPluginSettings">
+    <option name="enableDetekt" value="true" />
+    <option name="enableFormatting" value="false" />
+    <option name="buildUponDefaultConfig" value="true" />
+    <option name="baselinePath" value="$PROJECT_DIR$/{{BASELINE_PATH}}" />
+    <option name="configurationFiles">
+      <list>
+        <option value="$PROJECT_DIR$/{{CONFIG_PATH}}" />
+      </list>
+    </option>
+    <option name="pluginJars">
+      <list>
+        <option value="$PROJECT_DIR$/{{KTLINT_JAR}}" />
+        <option value="$PROJECT_DIR$/{{COMPOSE_JAR}}" />
+      </list>
+    </option>
+  </component>
+</project>

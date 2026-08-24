@@ -61,7 +61,7 @@ PYTHONPATH=<skill-creator>/skills/skill-creator \
     --num-workers 1
 ```
 
-Four things about that runner, each of which has already cost hours:
+Five things about that runner, each of which has already cost hours:
 
 - **It is POSIX-only and fails silently on Windows.** `select()` on a pipe raises
   `WinError 10093`, and `SKILL.md` is read as cp1252. Either fault produces **0.00 on
@@ -90,6 +90,46 @@ Four things about that runner, each of which has already cost hours:
   aside, then 1.00 on all four — the description was never the problem. Note
   `commit` and `branch` were immune only because they'd been renamed away from
   `conventional-*`.
+
+- **A language- or tool-scoped skill has to be evaluated in a repository of that
+  kind.** The wrapper runs every query with `cwd` set to *this* repository, and
+  `CLAUDE.md` here opens by saying it "ships no application code — every deliverable
+  is a prompt (`SKILL.md`) plus JSON manifests. There is nothing to compile and no
+  runtime." Claude reads that and correctly concludes a Kotlin static-analysis skill
+  is irrelevant, so the positives fail for a reason that has nothing to do with the
+  description.
+
+  `detekt-setup` measured **10/14 here and 14/14** in a Kotlin Multiplatform project,
+  same eval set, same runner, three runs per query, description untouched. The
+  failures were the *most literal* queries — `"set up detekt in this project"` scored
+  0/3 in this repo despite that exact phrase appearing in the description — which is
+  the tell that the environment is wrong rather than the wording.
+
+  This is the same shape of artifact as the clean-working-tree warning above, and the
+  fix is a fixture. Nothing of the target project is modified:
+
+  ```bash
+  F=<scratch>/fixture
+  git -C <a real Kotlin project> archive HEAD | tar -x -C "$F"
+  cp -r <plugin> "$F/" && cp scripts/run_trigger_eval.py "$F/scripts/"
+  cd "$F" && git init -q && git add -A && git commit -qm fixture
+  echo >> some/tracked/file.kt          # the tree must be dirty, per above
+  python3 scripts/run_trigger_eval.py <plugin>/skills/<skill>
+  ```
+
+  The wrapper derives the repository root from its own location, so copying it and the
+  plugin into the fixture is what redirects it — there is no flag for this. The fixture
+  needs its own `.git`, and a `CLAUDE.md` describing a real project of the right kind
+  is part of what you are testing, so keep the one that came with it.
+
+  **Score `git-workflow` and `docs-workflow` here; score anything language-scoped in a
+  fixture.** A number produced in the wrong repository is not a weaker measurement, it
+  is a measurement of something else.
+
+  The fixture result is platform-independent: `detekt-setup` scored 14/14 from a fixture on
+  Windows and 14/14 from one on Linux, using the upstream runner natively there. So
+  the wrapper's Windows patches restore the correct behavior rather than distorting scores —
+  worth knowing before you suspect them for a bad number.
 
 ## Why they don't run in CI
 
@@ -140,7 +180,8 @@ passing dropped below threshold. Treat the list as ranked, not as a set, and put
 phrasings you most expect a user to type first.
 
 Current scores: `docs-system` 10/10, `reference-doc` 9/10, `commit` 9/9,
-`branch` 6/8.
+`branch` 6/8, `detekt-setup` 14/14 (in a Kotlin fixture — 10/14 in this repo, see
+above).
 
 ## Known limits
 
@@ -148,6 +189,13 @@ Implicit triggers stay weak. "implement the retry logic" scores 0.00 for
 `branch` even after tuning, because the primary intent is writing code and
 branching is a secondary inference. Don't over-tune for these; the explicit
 cases are what matter.
+
+One counter-example worth knowing, because it narrows that rule: `detekt-setup`
+scored 3/3 on "nothing stops bad Compose code from landing in this repo" — no tool
+name, no imperative, the intent stated as a complaint. So an implicit trigger can
+land when the description names the *problem domain* densely enough (Compose,
+pre-commit, CI gate) rather than only the action. The `branch` case stays hard for a
+different reason: there, branching competes with the user's actual request.
 
 `open-pr` is trigger-tested like the others. The harness discards
 `disable-model-invocation` — it writes only `description:` into a temp command
